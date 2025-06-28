@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-06-28T18:55:47.196Z",
+  "timestamp": "2025-06-28T21:39:12.024Z",
   "version": "1.0",
   "entries": [
     {
@@ -313,7 +313,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:48:27.314Z",
       "updatedAt": "2025-06-28T18:48:27.314Z",
-      "lastAccessedAt": "2025-06-28T18:48:27.314Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 718,
       "compressed": false,
@@ -365,7 +365,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:48:40.423Z",
       "updatedAt": "2025-06-28T18:48:40.423Z",
-      "lastAccessedAt": "2025-06-28T18:48:40.423Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 931,
       "compressed": false,
@@ -385,7 +385,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:48:45.309Z",
       "updatedAt": "2025-06-28T18:48:45.309Z",
-      "lastAccessedAt": "2025-06-28T18:48:45.309Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 1231,
       "compressed": true,
@@ -419,7 +419,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:49:03.168Z",
       "updatedAt": "2025-06-28T18:49:03.168Z",
-      "lastAccessedAt": "2025-06-28T18:49:03.168Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 397,
       "compressed": false,
@@ -465,7 +465,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:49:08.290Z",
       "updatedAt": "2025-06-28T18:49:08.290Z",
-      "lastAccessedAt": "2025-06-28T18:49:08.290Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 949,
       "compressed": false,
@@ -520,7 +520,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:49:21.165Z",
       "updatedAt": "2025-06-28T18:49:21.165Z",
-      "lastAccessedAt": "2025-06-28T18:49:21.165Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 648,
       "compressed": false,
@@ -555,7 +555,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:49:30.611Z",
       "updatedAt": "2025-06-28T18:49:30.611Z",
-      "lastAccessedAt": "2025-06-28T18:49:30.611Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 299,
       "compressed": false,
@@ -585,7 +585,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:49:37.286Z",
       "updatedAt": "2025-06-28T18:49:37.286Z",
-      "lastAccessedAt": "2025-06-28T18:49:37.286Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 198,
       "compressed": false,
@@ -636,7 +636,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:49:51.228Z",
       "updatedAt": "2025-06-28T18:49:51.228Z",
-      "lastAccessedAt": "2025-06-28T18:49:51.228Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 681,
       "compressed": false,
@@ -687,7 +687,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:50:04.707Z",
       "updatedAt": "2025-06-28T18:50:04.707Z",
-      "lastAccessedAt": "2025-06-28T18:50:04.707Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 494,
       "compressed": false,
@@ -733,7 +733,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:50:53.944Z",
       "updatedAt": "2025-06-28T18:50:53.944Z",
-      "lastAccessedAt": "2025-06-28T18:50:53.944Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 489,
       "compressed": false,
@@ -761,7 +761,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:50:54.280Z",
       "updatedAt": "2025-06-28T18:50:54.280Z",
-      "lastAccessedAt": "2025-06-28T18:50:54.280Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 245,
       "compressed": false,
@@ -803,7 +803,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:51:58.867Z",
       "updatedAt": "2025-06-28T18:51:58.867Z",
-      "lastAccessedAt": "2025-06-28T18:51:58.867Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 639,
       "compressed": false,
@@ -829,7 +829,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:52:07.657Z",
       "updatedAt": "2025-06-28T18:52:07.657Z",
-      "lastAccessedAt": "2025-06-28T18:52:07.657Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 223,
       "compressed": false,
@@ -849,7 +849,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:52:29.002Z",
       "updatedAt": "2025-06-28T18:52:29.002Z",
-      "lastAccessedAt": "2025-06-28T18:52:29.002Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 1220,
       "compressed": true,
@@ -911,7 +911,7 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:55:42.017Z",
       "updatedAt": "2025-06-28T18:55:42.017Z",
-      "lastAccessedAt": "2025-06-28T18:55:42.017Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 938,
       "compressed": false,
@@ -931,61 +931,213 @@
       "accessLevel": "shared",
       "createdAt": "2025-06-28T18:55:47.028Z",
       "updatedAt": "2025-06-28T18:55:47.028Z",
-      "lastAccessedAt": "2025-06-28T18:55:47.028Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
       "version": 1,
       "size": 1192,
       "compressed": true,
       "checksum": "bd48140ed46c5159413cf4153ea7b9b5b49cdd5c3ad977ebe46f5281051cdc9b",
       "references": [],
       "dependencies": []
+    },
+    {
+      "id": "entry_mcglqk1p_g9223jlam",
+      "key": "swarm-auto-centralized-1751136334602/deployment-orchestrator/deployment-status",
+      "value": {
+        "deployment_time": "2025-06-28T18:53:30Z",
+        "status": "success",
+        "environment": "dev",
+        "frontend": {
+          "url": "http://echoes-frontend-dev-418272766513.s3-website-us-east-1.amazonaws.com",
+          "s3_bucket": "echoes-frontend-dev-418272766513",
+          "region": "us-east-1",
+          "hosting_type": "s3_static_website",
+          "files_deployed": [
+            "index.html",
+            "vite.svg",
+            "assets/index-Cxy1CGHS.css",
+            "assets/index-B4vVyvLI.js"
+          ]
+        },
+        "backend": {
+          "api_endpoint": "https://6oit6bohh3.execute-api.us-east-1.amazonaws.com/dev/",
+          "status": "already_deployed",
+          "services": {
+            "cognito": "us-east-1_5I2DeD01Z",
+            "s3_storage": "echoes-audio-dev-418272766513",
+            "dynamodb": "EchoesTable-dev"
+          }
+        },
+        "integration": {
+          "frontend_connected_to_backend": true,
+          "auth_configured": true,
+          "api_endpoint_configured": true
+        }
+      },
+      "type": "object",
+      "namespace": "default",
+      "tags": [],
+      "metadata": {},
+      "owner": "system",
+      "accessLevel": "shared",
+      "createdAt": "2025-06-28T18:56:07.933Z",
+      "updatedAt": "2025-06-28T18:56:07.933Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
+      "version": 1,
+      "size": 750,
+      "compressed": false,
+      "checksum": "b00804604ec2d02e2f33f35c462470fcd50841774acf3f1dc62452bb0adb8a80",
+      "references": [],
+      "dependencies": []
+    },
+    {
+      "id": "entry_mcglsvqd_qnmwkx62a",
+      "key": "swarm-auto-centralized-1751136334602/integration-architect/completion-summary",
+      "value": "{\"status\":\"COMPLETED\",\"deliverables\":{\"configurations\":{\"vite_config\":\"Updated with proxy settings for /api and /health endpoints\",\"environment_config\":\"Created .env.example with all required variables\",\"config_utility\":\"Created src/config/index.ts for centralized configuration\"},\"authentication\":{\"auth_service\":\"src/services/authService.ts - Handles Cognito/JWT auth\",\"auth_context\":\"Updated AuthContext.tsx to use auth service\",\"features\":[\"Login\",\"Register\",\"Logout\",\"Auto token refresh\",\"Mock mode for development\"]},\"api_integration\":{\"api_client\":\"Updated apiClient.js with config integration\",\"api_interceptor\":\"Created apiInterceptor.ts for error handling and token refresh\",\"api_service\":\"Created apiService.ts with high-level API wrapper\"},\"testing\":{\"integration_tests\":\"src/__tests__/integration/api.integration.test.ts\",\"test_coverage\":\"All endpoints, auth flow, error handling, upload progress\"},\"documentation\":{\"integration_guide\":\"docs/API_INTEGRATION_GUIDE.md\",\"api_contract\":\"docs/API_CONTRACT.md\"}},\"key_integration_points\":{\"cors\":\"Backend allows localhost:3000, Vite proxies /api calls\",\"auth_flow\":\"JWT Bearer tokens, 1-hour expiration, auto refresh\",\"upload_flow\":\"3-step process: init → S3 upload → save metadata\",\"error_handling\":\"Automatic 401 retry with token refresh\"},\"next_steps_for_production\":[\"Replace mock auth with real Cognito SDK\",\"Configure production CORS origins\",\"Setup HTTPS for secure communication\",\"Implement request caching\",\"Add WebSocket support for real-time updates\"]}",
+      "type": "object",
+      "namespace": "default",
+      "tags": [],
+      "metadata": {},
+      "owner": "system",
+      "accessLevel": "shared",
+      "createdAt": "2025-06-28T18:57:56.389Z",
+      "updatedAt": "2025-06-28T18:57:56.389Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
+      "version": 1,
+      "size": 1657,
+      "compressed": true,
+      "checksum": "0139dda8d1e18a976db7cbf692848abfd447783cdebbe0b2c0043a339e9bda51",
+      "references": [],
+      "dependencies": []
+    },
+    {
+      "id": "entry_mcglt0n1_5dguk4mow",
+      "key": "swarm-auto-centralized-1751136334602/deployment-orchestrator/health-checks",
+      "value": {
+        "timestamp": "2025-06-28T18:57:41Z",
+        "overall_status": "healthy",
+        "frontend": {
+          "url": "http://echoes-frontend-dev-418272766513.s3-website-us-east-1.amazonaws.com",
+          "http_status": "200",
+          "status": "healthy"
+        },
+        "backend": {
+          "url": "https://6oit6bohh3.execute-api.us-east-1.amazonaws.com/dev",
+          "health_endpoint": "healthy",
+          "status": "healthy"
+        },
+        "integration": {
+          "cors_configured": true,
+          "frontend_backend_connected": true,
+          "auth_configured": true
+        }
+      },
+      "type": "object",
+      "namespace": "default",
+      "tags": [],
+      "metadata": {},
+      "owner": "system",
+      "accessLevel": "shared",
+      "createdAt": "2025-06-28T18:58:02.749Z",
+      "updatedAt": "2025-06-28T18:58:02.749Z",
+      "lastAccessedAt": "2025-06-28T21:38:11.050Z",
+      "version": 1,
+      "size": 449,
+      "compressed": false,
+      "checksum": "5e8a13128ff406d86b98c1b4bf9ee0ce9af4b525bf54af148fe4f7b3bfb2a766",
+      "references": [],
+      "dependencies": []
+    },
+    {
+      "id": "entry_mcgrjxfq_d2g4jnyci",
+      "key": "git_push_error_analysis",
+      "value": "Solution Coordinator findings: Large repository (1.1G) with 153.34 MiB pack size causing HTTP 400 error. 4 commits ahead, git garbage detected. Root cause: Push size exceeds server limits.",
+      "type": "string",
+      "namespace": "default",
+      "tags": [],
+      "metadata": {},
+      "owner": "system",
+      "accessLevel": "shared",
+      "createdAt": "2025-06-28T21:38:56.390Z",
+      "updatedAt": "2025-06-28T21:38:56.390Z",
+      "lastAccessedAt": "2025-06-28T21:38:56.390Z",
+      "version": 1,
+      "size": 219,
+      "compressed": false,
+      "checksum": "c3c50f4a905152c0e419b84e26a4a49577faccb00815f0df493b76087914ebf7",
+      "references": [],
+      "dependencies": []
+    },
+    {
+      "id": "entry_mcgrk9hl_vcrukp9x6",
+      "key": "git_push_solutions",
+      "value": "Prioritized solutions: 1. Git cleanup (high priority, immediate) 2. Large file detection and LFS (high priority, preventive) 3. Chunked pushing (medium priority, workaround) 4. Remote limits check (medium priority, diagnostic) 5. Alternative push methods (low priority, fallback)",
+      "type": "string",
+      "namespace": "default",
+      "tags": [],
+      "metadata": {},
+      "owner": "system",
+      "accessLevel": "shared",
+      "createdAt": "2025-06-28T21:39:12.009Z",
+      "updatedAt": "2025-06-28T21:39:12.009Z",
+      "lastAccessedAt": "2025-06-28T21:39:12.009Z",
+      "version": 1,
+      "size": 310,
+      "compressed": false,
+      "checksum": "d6f9ef404429007d214c605d6d850217850a7a307dc188985daf9393d0c17a02",
+      "references": [],
+      "dependencies": []
     }
   ],
   "statistics": {
     "overview": {
-      "totalEntries": 25,
-      "totalSize": 38267,
-      "compressedEntries": 9,
-      "compressionRatio": -2.2144273127753302,
-      "indexSize": 1250,
-      "memoryUsage": 9020008,
+      "totalEntries": 30,
+      "totalSize": 41652,
+      "compressedEntries": 10,
+      "compressionRatio": -1.8538119911176907,
+      "indexSize": 1500,
+      "memoryUsage": 8444128,
       "diskUsage": 0
     },
     "distribution": {
       "byNamespace": {
         "default": {
-          "count": 25,
-          "size": 38267
+          "count": 30,
+          "size": 41652
         }
       },
       "byType": {
         "object": {
-          "count": 25,
-          "size": 38267
+          "count": 28,
+          "size": 41123
+        },
+        "string": {
+          "count": 2,
+          "size": 529
         }
       },
       "byOwner": {
         "system": {
-          "count": 25,
-          "size": 38267
+          "count": 30,
+          "size": 41652
         }
       },
       "byAccessLevel": {
         "shared": {
-          "count": 25,
-          "size": 38267
+          "count": 30,
+          "size": 41652
         }
       }
     },
     "temporal": {
-      "entriesCreatedLast24h": 25,
-      "entriesUpdatedLast24h": 25,
-      "entriesAccessedLast24h": 25,
+      "entriesCreatedLast24h": 30,
+      "entriesUpdatedLast24h": 30,
+      "entriesAccessedLast24h": 30,
       "oldestEntry": "2025-06-28T16:25:52.559Z",
-      "newestEntry": "2025-06-28T18:55:47.028Z"
+      "newestEntry": "2025-06-28T21:39:12.009Z"
     },
     "performance": {
       "averageQueryTime": 0,
-      "averageWriteTime": 9,
+      "averageWriteTime": 3,
       "cacheHitRatio": 0,
       "indexEfficiency": 0.95
     },

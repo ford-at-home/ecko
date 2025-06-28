@@ -1,0 +1,13 @@
+{
+  "objective": "go through my filesystem and figure out waht is causing this error in pushing to git: git push\nEnumerating objects: 17109, done.\nCounting objects: 100% (17109/17109), done.\nDelta compression using up to 8 threads\nCompressing objects: 100% (11009/11009), done.\nerror: RPC failed; HTTP 400 curl 22 The requested URL returned error: 400\nsend-pack: unexpected disconnect while reading sideband packet\nWriting objects: 100% (17108/17108), 152.88 MiB | 150.82 MiB/s, done.\nTotal 17108 (delta 5115), reused 17090 (delta 5103), pack-reused 0\nfatal: the remote end hung up unexpectedly\nEverything up-to-date",
+  "strategy": "auto",
+  "mode": "centralized",
+  "maxAgents": 5,
+  "timeout": 60,
+  "parallel": false,
+  "monitor": false,
+  "output": "json",
+  "outputDir": "./reports",
+  "timestamp": "2025-06-28T21:36:48.029Z",
+  "id": "swarm-auto-centralized-1751146608029"
+}
