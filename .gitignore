@@ -55,3 +55,9 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Python virtual environments
+venv/
+env/
+.venv/
+.env/
