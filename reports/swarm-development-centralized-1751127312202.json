@@ -1,0 +1,13 @@
+{
+  "objective": "Take this README and build out this entire web app, including backend. As you distribute work to agnets, take a moment and scope out the project so that nobody steps on eachother. Give the agents short enough tasks so you can pause every so often and make sure everyone is on the right track before allowing them to respwan and take on the next batch of tasks.",
+  "strategy": "development",
+  "mode": "centralized",
+  "maxAgents": 10,
+  "timeout": 60,
+  "parallel": true,
+  "monitor": false,
+  "output": "json",
+  "outputDir": "./reports",
+  "timestamp": "2025-06-28T16:15:12.202Z",
+  "id": "swarm-development-centralized-1751127312202"
+}

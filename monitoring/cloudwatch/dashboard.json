@@ -1,0 +1,203 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/ApiGateway", "Count", "ApiName", "echoes-api-${ENVIRONMENT}" ],
+          [ ".", "Latency", ".", "." ],
+          [ ".", "4XXError", ".", "." ],
+          [ ".", "5XXError", ".", "." ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${AWS_REGION}",
+        "title": "API Gateway Metrics",
+        "period": 300,
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/Lambda", "Invocations", "FunctionName", "echoes-${ENVIRONMENT}-init-upload" ],
+          [ ".", ".", ".", "echoes-${ENVIRONMENT}-save-echo" ],
+          [ ".", ".", ".", "echoes-${ENVIRONMENT}-get-echoes" ],
+          [ ".", ".", ".", "echoes-${ENVIRONMENT}-get-random-echo" ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${AWS_REGION}",
+        "title": "Lambda Invocations",
+        "period": 300,
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/Lambda", "Duration", "FunctionName", "echoes-${ENVIRONMENT}-init-upload" ],
+          [ ".", ".", ".", "echoes-${ENVIRONMENT}-save-echo" ],
+          [ ".", ".", ".", "echoes-${ENVIRONMENT}-get-echoes" ],
+          [ ".", ".", ".", "echoes-${ENVIRONMENT}-get-random-echo" ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${AWS_REGION}",
+        "title": "Lambda Duration",
+        "period": 300,
+        "stat": "Average"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/Lambda", "Errors", "FunctionName", "echoes-${ENVIRONMENT}-init-upload" ],
+          [ ".", ".", ".", "echoes-${ENVIRONMENT}-save-echo" ],
+          [ ".", ".", ".", "echoes-${ENVIRONMENT}-get-echoes" ],
+          [ ".", ".", ".", "echoes-${ENVIRONMENT}-get-random-echo" ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${AWS_REGION}",
+        "title": "Lambda Errors",
+        "period": 300,
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/DynamoDB", "ConsumedReadCapacityUnits", "TableName", "EchoesTable-${ENVIRONMENT}" ],
+          [ ".", "ConsumedWriteCapacityUnits", ".", "." ],
+          [ ".", "ThrottledRequests", ".", "." ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${AWS_REGION}",
+        "title": "DynamoDB Metrics",
+        "period": 300,
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/S3", "BucketSizeBytes", "BucketName", "echoes-audio-${ENVIRONMENT}", "StorageType", "StandardStorage" ],
+          [ ".", "NumberOfObjects", ".", ".", ".", "AllStorageTypes" ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${AWS_REGION}",
+        "title": "S3 Storage Metrics",
+        "period": 86400,
+        "stat": "Average"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 18,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/CloudFront", "Requests", "DistributionId", "${CLOUDFRONT_DISTRIBUTION_ID}" ],
+          [ ".", "BytesDownloaded", ".", "." ],
+          [ ".", "4xxErrorRate", ".", "." ],
+          [ ".", "5xxErrorRate", ".", "." ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "CloudFront Metrics",
+        "period": 300,
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 18,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/Cognito", "SignInSuccesses", "UserPool", "${COGNITO_USER_POOL_ID}" ],
+          [ ".", "SignInThrottles", ".", "." ],
+          [ ".", "SignUpSuccesses", ".", "." ],
+          [ ".", "SignUpThrottles", ".", "." ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${AWS_REGION}",
+        "title": "Cognito Authentication Metrics",
+        "period": 300,
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "log",
+      "x": 0,
+      "y": 24,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "query": "SOURCE '/aws/lambda/echoes-${ENVIRONMENT}-save-echo'\n| fields @timestamp, @message\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 100",
+        "region": "${AWS_REGION}",
+        "title": "Recent Errors",
+        "view": "table"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 30,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "Echoes/${ENVIRONMENT}", "EchoUploads" ],
+          [ ".", "EchoPlays" ],
+          [ ".", "UserRegistrations" ],
+          [ ".", "ErrorRate" ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${AWS_REGION}",
+        "title": "Custom Application Metrics",
+        "period": 300,
+        "stat": "Sum"
+      }
+    }
+  ]
+}

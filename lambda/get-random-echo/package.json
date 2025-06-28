@@ -1,0 +1,9 @@
+{
+  "name": "get-random-echo-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function to retrieve a random echo with weighted selection",
+  "main": "index.js",
+  "dependencies": {
+    "aws-sdk": "^2.1467.0"
+  }
+}

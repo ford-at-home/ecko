@@ -1,0 +1,200 @@
+{
+  "alarms": [
+    {
+      "AlarmName": "Echoes-${ENVIRONMENT}-HighAPILatency",
+      "AlarmDescription": "API Gateway latency is too high",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:echoes-alerts-${ENVIRONMENT}"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "Latency",
+      "Namespace": "AWS/ApiGateway",
+      "Statistic": "Average",
+      "Dimensions": [
+        {
+          "Name": "ApiName",
+          "Value": "echoes-api-${ENVIRONMENT}"
+        }
+      ],
+      "Period": 300,
+      "EvaluationPeriods": 2,
+      "Threshold": 5000,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "Echoes-${ENVIRONMENT}-HighAPIErrorRate",
+      "AlarmDescription": "API Gateway error rate is too high",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:echoes-alerts-${ENVIRONMENT}"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "5XXError",
+      "Namespace": "AWS/ApiGateway",
+      "Statistic": "Sum",
+      "Dimensions": [
+        {
+          "Name": "ApiName",
+          "Value": "echoes-api-${ENVIRONMENT}"
+        }
+      ],
+      "Period": 300,
+      "EvaluationPeriods": 2,
+      "Threshold": 10,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "Echoes-${ENVIRONMENT}-LambdaErrors",
+      "AlarmDescription": "Lambda function errors are too high",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:echoes-alerts-${ENVIRONMENT}"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "Errors",
+      "Namespace": "AWS/Lambda",
+      "Statistic": "Sum",
+      "Dimensions": [
+        {
+          "Name": "FunctionName",
+          "Value": "echoes-${ENVIRONMENT}-save-echo"
+        }
+      ],
+      "Period": 300,
+      "EvaluationPeriods": 2,
+      "Threshold": 5,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "Echoes-${ENVIRONMENT}-LambdaDuration",
+      "AlarmDescription": "Lambda function duration is too high",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:echoes-alerts-${ENVIRONMENT}"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "Duration",
+      "Namespace": "AWS/Lambda",
+      "Statistic": "Average",
+      "Dimensions": [
+        {
+          "Name": "FunctionName",
+          "Value": "echoes-${ENVIRONMENT}-save-echo"
+        }
+      ],
+      "Period": 300,
+      "EvaluationPeriods": 3,
+      "Threshold": 25000,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "Echoes-${ENVIRONMENT}-DynamoDBThrottles",
+      "AlarmDescription": "DynamoDB throttles detected",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:echoes-alerts-${ENVIRONMENT}"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "ThrottledRequests",
+      "Namespace": "AWS/DynamoDB",
+      "Statistic": "Sum",
+      "Dimensions": [
+        {
+          "Name": "TableName",
+          "Value": "EchoesTable-${ENVIRONMENT}"
+        }
+      ],
+      "Period": 300,
+      "EvaluationPeriods": 1,
+      "Threshold": 1,
+      "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "Echoes-${ENVIRONMENT}-CloudFrontErrorRate",
+      "AlarmDescription": "CloudFront error rate is too high",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:echoes-alerts-${ENVIRONMENT}"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "5xxErrorRate",
+      "Namespace": "AWS/CloudFront",
+      "Statistic": "Average",
+      "Dimensions": [
+        {
+          "Name": "DistributionId",
+          "Value": "${CLOUDFRONT_DISTRIBUTION_ID}"
+        }
+      ],
+      "Period": 300,
+      "EvaluationPeriods": 2,
+      "Threshold": 5,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "Echoes-${ENVIRONMENT}-CognitoFailures",
+      "AlarmDescription": "High number of Cognito authentication failures",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:echoes-alerts-${ENVIRONMENT}"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "SignInThrottles",
+      "Namespace": "AWS/Cognito",
+      "Statistic": "Sum",
+      "Dimensions": [
+        {
+          "Name": "UserPool",
+          "Value": "${COGNITO_USER_POOL_ID}"
+        }
+      ],
+      "Period": 300,
+      "EvaluationPeriods": 2,
+      "Threshold": 10,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "Echoes-${ENVIRONMENT}-StorageUsage",
+      "AlarmDescription": "S3 storage usage is getting high",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:echoes-alerts-${ENVIRONMENT}"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "BucketSizeBytes",
+      "Namespace": "AWS/S3",
+      "Statistic": "Average",
+      "Dimensions": [
+        {
+          "Name": "BucketName",
+          "Value": "echoes-audio-${ENVIRONMENT}"
+        },
+        {
+          "Name": "StorageType",
+          "Value": "StandardStorage"
+        }
+      ],
+      "Period": 86400,
+      "EvaluationPeriods": 1,
+      "Threshold": 10737418240,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "TreatMissingData": "notBreaching"
+    }
+  ]
+}

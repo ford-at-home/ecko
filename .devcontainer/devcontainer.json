@@ -1,0 +1,138 @@
+{
+  "name": "Echoes Development Environment",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/aws-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "bradlc.vscode-tailwindcss",
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-python.black-formatter",
+        "amazonwebservices.aws-toolkit-vscode",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-playwright.playwright",
+        "GitHubActions.github-actions",
+        "ms-vscode.vscode-docker",
+        "hashicorp.terraform",
+        "aws-cdk.aws-cdk-vscode"
+      ],
+      "settings": {
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true,
+          "source.fixAll.eslint": true
+        },
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.formatting.provider": "black",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "aws.telemetry": false,
+        "files.exclude": {
+          "**/node_modules": true,
+          "**/.git": true,
+          "**/.svn": true,
+          "**/.hg": true,
+          "**/CVS": true,
+          "**/.DS_Store": true,
+          "**/tmp": true,
+          "**/coverage": true,
+          "**/.nyc_output": true,
+          "**/dist": true,
+          "**/build": true,
+          "**/.aws-sam": true
+        }
+      }
+    }
+  },
+
+  "containerEnv": {
+    "NODE_ENV": "development",
+    "ENVIRONMENT": "dev",
+    "AWS_DEFAULT_REGION": "us-east-1"
+  },
+
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/usr/local/bin:/home/vscode/.local/bin"
+  },
+
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
+  "forwardPorts": [
+    3000,
+    3001,
+    4566,
+    5432,
+    6379,
+    8000,
+    8001,
+    8025
+  ],
+
+  "portsAttributes": {
+    "3000": {
+      "label": "Frontend (React)",
+      "onAutoForward": "notify"
+    },
+    "3001": {
+      "label": "SAM Local API",
+      "onAutoForward": "silent"
+    },
+    "4566": {
+      "label": "LocalStack",
+      "onAutoForward": "silent"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    },
+    "6379": {
+      "label": "Redis",
+      "onAutoForward": "silent"
+    },
+    "8000": {
+      "label": "Backend API",
+      "onAutoForward": "notify"
+    },
+    "8001": {
+      "label": "DynamoDB Admin",
+      "onAutoForward": "openPreview"
+    },
+    "8025": {
+      "label": "MailHog",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  "postStartCommand": "echo 'Echoes development environment is ready! 🌀'",
+
+  "initializeCommand": "echo 'Initializing Echoes development environment...'",
+
+  "updateContentCommand": "npm install",
+
+  "remoteUser": "vscode",
+
+  "workspaceFolder": "/workspaces/echoes"
+}

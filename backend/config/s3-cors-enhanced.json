@@ -1,0 +1,40 @@
+{
+  "CORSRules": [
+    {
+      "ID": "EchoesSecureAudioUpload",
+      "AllowedHeaders": [
+        "Authorization",
+        "Content-Type",
+        "Content-Length",
+        "x-amz-date",
+        "x-amz-security-token",
+        "x-amz-server-side-encryption",
+        "x-amz-meta-*"
+      ],
+      "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+      "AllowedOrigins": [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://dev.echoes.app",
+        "https://staging.echoes.app",
+        "https://echoes.app",
+        "https://*.echoes.app"
+      ],
+      "ExposeHeaders": [
+        "ETag",
+        "x-amz-meta-user-id",
+        "x-amz-meta-echo-id",
+        "x-amz-meta-upload-timestamp",
+        "x-amz-server-side-encryption"
+      ],
+      "MaxAgeSeconds": 3600
+    },
+    {
+      "ID": "EchoesPreflightRequests",
+      "AllowedHeaders": ["*"],
+      "AllowedMethods": ["OPTIONS"],
+      "AllowedOrigins": ["*"],
+      "MaxAgeSeconds": 86400
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+# =============================================================================
+# Echoes FastAPI Lambda Requirements
+# Optimized for cold start performance and minimal package size
+# =============================================================================
+
+# =============================================================================
+# Core FastAPI Dependencies
+# =============================================================================
+fastapi==0.104.1
+mangum==0.17.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+uvicorn[standard]==0.24.0
+
+# =============================================================================
+# AWS SDK - Pinned for compatibility
+# =============================================================================
+boto3==1.34.0
+botocore==1.34.162
+
+# =============================================================================
+# Authentication & Security
+# =============================================================================
+# Using PyJWT instead of python-jose for smaller footprint
+PyJWT==2.8.0
+cryptography==41.0.7
+
+# HTTP client for external API calls
+requests==2.31.0
+
+# =============================================================================
+# Data & Utility Libraries
+# =============================================================================
+python-dateutil==2.8.2
+
+# =============================================================================
+# Lambda Runtime Optimizations
+# =============================================================================
+# Async support for better performance
+anyio==3.7.1
+
+# Type hints for better IDE support and runtime validation
+typing-extensions==4.8.0
+
+# =============================================================================
+# Optional: Performance & Monitoring
+# =============================================================================
+# Uncomment for production monitoring
+# aws-xray-sdk==2.12.1
+# structlog==23.2.0
+
+# =============================================================================
+# Development Dependencies (exclude from production)
+# =============================================================================
+# The following should NOT be included in Lambda deployment:
+# - pytest
+# - pytest-asyncio
+# - black
+# - flake8
+# - mypy
+# - httpx (for testing)
+
+# =============================================================================
+# Package Size Optimization Notes:
+# - boto3/botocore: ~50MB (required for AWS services)
+# - fastapi: ~15MB (core framework)
+# - cryptography: ~10MB (security)
+# - requests: ~5MB (HTTP client)
+# - Total estimated: ~80MB (well under 250MB Lambda limit)
+# =============================================================================

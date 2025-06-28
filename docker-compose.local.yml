@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # LocalStack - Local AWS cloud stack
+  localstack:
+    container_name: echoes-localstack
+    image: localstack/localstack:3.0
+    ports:
+      - "4566:4566"            # LocalStack Gateway
+      - "4510-4559:4510-4559"  # External services port range
+    environment:
+      - DEBUG=${DEBUG-1}
+      - LAMBDA_EXECUTOR=docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - SERVICES=s3,dynamodb,lambda,apigateway,cognito-idp,cognito-identity,sns,sqs,events,logs,iam,sts
+      - DATA_DIR=/tmp/localstack/data
+      - PERSISTENCE=1
+      - LAMBDA_DOCKER_NETWORK=echoes_local
+      - HOSTNAME_EXTERNAL=localstack
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./tmp/localstack}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - echoes_local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL Database (if using RDS locally)
+  postgres:
+    container_name: echoes-postgres
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: echoes_dev
+      POSTGRES_USER: echoes_user
+      POSTGRES_PASSWORD: echoes_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/local-dev/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - echoes_local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U echoes_user -d echoes_dev"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis for caching
+  redis:
+    container_name: echoes-redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - echoes_local
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Mailhog for email testing
+  mailhog:
+    container_name: echoes-mailhog
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - echoes_local
+
+  # LocalStack initialization
+  localstack-init:
+    container_name: echoes-localstack-init
+    image: amazon/aws-cli:latest
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    volumes:
+      - ./scripts/local-dev/localstack-init.sh:/opt/code/localstack-init.sh
+      - ./scripts/local-dev/aws:/opt/code/aws
+    command: >
+      sh -c "
+        echo 'Waiting for LocalStack to be ready...' &&
+        sleep 10 &&
+        chmod +x /opt/code/localstack-init.sh &&
+        /opt/code/localstack-init.sh
+      "
+    networks:
+      - echoes_local
+
+  # DynamoDB Admin UI
+  dynamodb-admin:
+    container_name: echoes-dynamodb-admin
+    image: aaronshaf/dynamodb-admin:latest
+    depends_on:
+      - localstack
+    environment:
+      - DYNAMO_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    ports:
+      - "8001:8001"
+    networks:
+      - echoes_local
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  echoes_local:
+    driver: bridge

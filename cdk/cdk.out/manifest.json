@@ -1,0 +1,1024 @@
+{
+  "version": "35.0.0",
+  "artifacts": {
+    "Echoes-dev-Storage.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Echoes-dev-Storage.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Echoes-dev-Storage": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://418272766513/us-east-1",
+      "properties": {
+        "templateFile": "Echoes-dev-Storage.template.json",
+        "terminationProtection": false,
+        "tags": {
+          "C": "D",
+          "d": "e",
+          "E": "c"
+        },
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-deploy-role-418272766513-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-cfn-exec-role-418272766513-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-418272766513-us-east-1/926e7cea5609261839496ca0996d020e7e657d803879e704a2d66c096569859d.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Echoes-dev-Storage.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-lookup-role-418272766513-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Echoes-dev-Storage.assets"
+      ],
+      "metadata": {
+        "/Echoes-dev-Storage": [
+          {
+            "type": "aws:cdk:stack-tags",
+            "data": [
+              {
+                "Key": "C",
+                "Value": "D"
+              },
+              {
+                "Key": "d",
+                "Value": "e"
+              },
+              {
+                "Key": "E",
+                "Value": "c"
+              }
+            ]
+          }
+        ],
+        "/Echoes-dev-Storage/AudioBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AudioBucket96BEECBA"
+          }
+        ],
+        "/Echoes-dev-Storage/EchoesTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "EchoesTable3D95A947"
+            }
+          }
+        ],
+        "/Echoes-dev-Storage/EchoesTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesTable3D95A947"
+          }
+        ],
+        "/Echoes-dev-Storage/UserS3AccessRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserS3AccessRole3C77CE26"
+          }
+        ],
+        "/Echoes-dev-Storage/UserS3AccessRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserS3AccessRoleDefaultPolicyF8C5E0A2"
+          }
+        ],
+        "/Echoes-dev-Storage/AudioBucketName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AudioBucketName"
+          }
+        ],
+        "/Echoes-dev-Storage/AudioBucketArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AudioBucketArn"
+          }
+        ],
+        "/Echoes-dev-Storage/EchoesTableName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesTableName"
+          }
+        ],
+        "/Echoes-dev-Storage/EchoesTableArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesTableArn"
+          }
+        ],
+        "/Echoes-dev-Storage/UserS3AccessRoleArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserS3AccessRoleArn"
+          }
+        ],
+        "/Echoes-dev-Storage/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Echoes-dev-Storage/Exports/Output{\"Fn::GetAtt\":[\"AudioBucket96BEECBA\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttAudioBucket96BEECBAArnC8B7DB4B"
+          }
+        ],
+        "/Echoes-dev-Storage/Exports/Output{\"Fn::GetAtt\":[\"EchoesTable3D95A947\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttEchoesTable3D95A947Arn5B6A4265"
+          }
+        ],
+        "/Echoes-dev-Storage/Exports/Output{\"Ref\":\"AudioBucket96BEECBA\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+          }
+        ],
+        "/Echoes-dev-Storage/Exports/Output{\"Ref\":\"EchoesTable3D95A947\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefEchoesTable3D95A947F0A99335"
+          }
+        ],
+        "/Echoes-dev-Storage/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Echoes-dev-Storage/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Echoes-dev-Storage"
+    },
+    "Echoes-dev-Auth.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Echoes-dev-Auth.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Echoes-dev-Auth": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://418272766513/us-east-1",
+      "properties": {
+        "templateFile": "Echoes-dev-Auth.template.json",
+        "terminationProtection": false,
+        "tags": {
+          "C": "D",
+          "d": "e",
+          "E": "c"
+        },
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-deploy-role-418272766513-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-cfn-exec-role-418272766513-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-418272766513-us-east-1/6fbf8d0ebbe8606bc1b8d4da85dfd2c9e86f28aeed0e4a4d47be1eace4065fb9.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Echoes-dev-Auth.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-lookup-role-418272766513-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Echoes-dev-Auth.assets"
+      ],
+      "metadata": {
+        "/Echoes-dev-Auth": [
+          {
+            "type": "aws:cdk:stack-tags",
+            "data": [
+              {
+                "Key": "C",
+                "Value": "D"
+              },
+              {
+                "Key": "d",
+                "Value": "e"
+              },
+              {
+                "Key": "E",
+                "Value": "c"
+              }
+            ]
+          }
+        ],
+        "/Echoes-dev-Auth/EchoesUserPool/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesUserPool0F1AA8FE"
+          }
+        ],
+        "/Echoes-dev-Auth/EchoesUserPoolClient/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesUserPoolClient828825D5"
+          }
+        ],
+        "/Echoes-dev-Auth/EchoesUserPoolDomain/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesUserPoolDomainE3CA8395"
+          }
+        ],
+        "/Echoes-dev-Auth/EchoesIdentityPool": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesIdentityPool"
+          }
+        ],
+        "/Echoes-dev-Auth/CognitoAuthenticatedRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoAuthenticatedRole5CA1BC89"
+          }
+        ],
+        "/Echoes-dev-Auth/CognitoAuthenticatedRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoAuthenticatedRoleDefaultPolicyA138AC36"
+          }
+        ],
+        "/Echoes-dev-Auth/IdentityPoolRoleAttachment": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "IdentityPoolRoleAttachment"
+          }
+        ],
+        "/Echoes-dev-Auth/UserPoolId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPoolId"
+          }
+        ],
+        "/Echoes-dev-Auth/UserPoolClientId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPoolClientId"
+          }
+        ],
+        "/Echoes-dev-Auth/IdentityPoolId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "IdentityPoolId"
+          }
+        ],
+        "/Echoes-dev-Auth/UserPoolDomain": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPoolDomain"
+          }
+        ],
+        "/Echoes-dev-Auth/AuthenticatedRoleArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthenticatedRoleArn"
+          }
+        ],
+        "/Echoes-dev-Auth/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Echoes-dev-Auth/Exports/Output{\"Fn::GetAtt\":[\"EchoesUserPool0F1AA8FE\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttEchoesUserPool0F1AA8FEArn17EA7ADA"
+          }
+        ],
+        "/Echoes-dev-Auth/Exports/Output{\"Ref\":\"EchoesUserPool0F1AA8FE\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefEchoesUserPool0F1AA8FEB2D0812B"
+          }
+        ],
+        "/Echoes-dev-Auth/Exports/Output{\"Ref\":\"EchoesUserPoolClient828825D5\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefEchoesUserPoolClient828825D5A9DE085C"
+          }
+        ],
+        "/Echoes-dev-Auth/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Echoes-dev-Auth/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Echoes-dev-Auth"
+    },
+    "Echoes-dev-Api.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Echoes-dev-Api.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Echoes-dev-Api": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://418272766513/us-east-1",
+      "properties": {
+        "templateFile": "Echoes-dev-Api.template.json",
+        "terminationProtection": false,
+        "tags": {
+          "C": "D",
+          "d": "e",
+          "E": "c"
+        },
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-deploy-role-418272766513-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-cfn-exec-role-418272766513-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-418272766513-us-east-1/c15a2f331d45fef4eb605173bf4eb0944440270bdff9a38eccd61f04e3235824.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Echoes-dev-Api.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-lookup-role-418272766513-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Echoes-dev-Storage",
+        "Echoes-dev-Auth",
+        "Echoes-dev-Api.assets"
+      ],
+      "metadata": {
+        "/Echoes-dev-Api": [
+          {
+            "type": "aws:cdk:stack-tags",
+            "data": [
+              {
+                "Key": "C",
+                "Value": "D"
+              },
+              {
+                "Key": "d",
+                "Value": "e"
+              },
+              {
+                "Key": "E",
+                "Value": "c"
+              }
+            ]
+          }
+        ],
+        "/Echoes-dev-Api/EchoesLambdaRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesLambdaRoleD3BFB8D7"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesLambdaRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesLambdaRoleDefaultPolicyE81CDB44"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApiFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiFunctionBF174C22"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApiFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiFunctionLogRetention43E950A9"
+          }
+        ],
+        "/Echoes-dev-Api/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ],
+        "/Echoes-dev-Api/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+          }
+        ],
+        "/Echoes-dev-Api/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApi4E6D2555"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/CloudWatchRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiCloudWatchRole26AE0623"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Account": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiAccount999DBBBF"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Deployment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiDeploymentE06503CC047ba6cc5097c709236ab450ee419e11"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/DeploymentStage.dev/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiDeploymentStagedev0EAC7402"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Endpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiEndpoint2227A362"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiOPTIONS90FCEAB7"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/GET/ApiPermission.EchoesdevApiEchoesApi17E06010.GET..": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiGETApiPermissionEchoesdevApiEchoesApi17E06010GET6B8806AD"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/GET/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.GET..": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiGETApiPermissionTestEchoesdevApiEchoesApi17E06010GET7953C46A"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiGETCA8F060B"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/health/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApihealthFE4CECC8"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/health/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApihealthOPTIONSE7BF6106"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/health/GET/ApiPermission.EchoesdevApiEchoesApi17E06010.GET..health": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApihealthGETApiPermissionEchoesdevApiEchoesApi17E06010GEThealth0EF0B9CE"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/health/GET/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.GET..health": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApihealthGETApiPermissionTestEchoesdevApiEchoesApi17E06010GEThealth9F4A4ACC"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/health/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApihealthGET023E9EAE"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoes0AA750CF"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesOPTIONSB6A0F40C"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/init-upload/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesinituploadCFA3780C"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/init-upload/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesinituploadOPTIONSEE42F6F5"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/init-upload/POST/ApiPermission.EchoesdevApiEchoesApi17E06010.POST..echoes.init-upload": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesinituploadPOSTApiPermissionEchoesdevApiEchoesApi17E06010POSTechoesinituploadB96D1D84"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/init-upload/POST/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.POST..echoes.init-upload": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesinituploadPOSTApiPermissionTestEchoesdevApiEchoesApi17E06010POSTechoesinitupload32516394"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/init-upload/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesinituploadPOSTAFF06BCF"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/POST/ApiPermission.EchoesdevApiEchoesApi17E06010.POST..echoes": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesPOSTApiPermissionEchoesdevApiEchoesApi17E06010POSTechoes3C800189"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/POST/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.POST..echoes": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesPOSTApiPermissionTestEchoesdevApiEchoesApi17E06010POSTechoes4CD2749C"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesPOST6C1AC484"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/GET/ApiPermission.EchoesdevApiEchoesApi17E06010.GET..echoes": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesGETApiPermissionEchoesdevApiEchoesApi17E06010GETechoes9434DAE4"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/GET/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.GET..echoes": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesGETApiPermissionTestEchoesdevApiEchoesApi17E06010GETechoes196C5E33"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesGET7B8846F7"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/random/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesrandomC7E597E9"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/random/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesrandomOPTIONS23ED7000"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/random/GET/ApiPermission.EchoesdevApiEchoesApi17E06010.GET..echoes.random": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesrandomGETApiPermissionEchoesdevApiEchoesApi17E06010GETechoesrandom64DF9D88"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/random/GET/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.GET..echoes.random": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesrandomGETApiPermissionTestEchoesdevApiEchoesApi17E06010GETechoesrandom18F664EC"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/random/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesrandomGET9D919631"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/stats/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesstats6A2FE60D"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/stats/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesstatsOPTIONS7A1CDE51"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/stats/user/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesstatsuser548DD301"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/stats/user/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesstatsuserOPTIONS2288430C"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/stats/user/GET/ApiPermission.EchoesdevApiEchoesApi17E06010.GET..echoes.stats.user": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesstatsuserGETApiPermissionEchoesdevApiEchoesApi17E06010GETechoesstatsuserF098C94F"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/stats/user/GET/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.GET..echoes.stats.user": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesstatsuserGETApiPermissionTestEchoesdevApiEchoesApi17E06010GETechoesstatsuser58444395"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/stats/user/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesstatsuserGET2F97ACB7"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/process-upload/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesprocessupload991BBE16"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/process-upload/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesprocessuploadOPTIONSDE3DAFF5"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/process-upload/POST/ApiPermission.EchoesdevApiEchoesApi17E06010.POST..echoes.process-upload": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesprocessuploadPOSTApiPermissionEchoesdevApiEchoesApi17E06010POSTechoesprocessuploadD4A4E70B"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/process-upload/POST/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.POST..echoes.process-upload": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesprocessuploadPOSTApiPermissionTestEchoesdevApiEchoesApi17E06010POSTechoesprocessupload347AB256"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/process-upload/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesprocessuploadPOSTDAD046A1"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/{echo_id}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesechoid6EEC7569"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/{echo_id}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesechoidOPTIONSC4916477"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/{echo_id}/GET/ApiPermission.EchoesdevApiEchoesApi17E06010.GET..echoes.{echo_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesechoidGETApiPermissionEchoesdevApiEchoesApi17E06010GETechoesechoidC9FDD656"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/{echo_id}/GET/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.GET..echoes.{echo_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesechoidGETApiPermissionTestEchoesdevApiEchoesApi17E06010GETechoesechoid6F202E7D"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/{echo_id}/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesechoidGET7073580C"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/{echo_id}/DELETE/ApiPermission.EchoesdevApiEchoesApi17E06010.DELETE..echoes.{echo_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesechoidDELETEApiPermissionEchoesdevApiEchoesApi17E06010DELETEechoesechoid3E17E337"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/{echo_id}/DELETE/ApiPermission.Test.EchoesdevApiEchoesApi17E06010.DELETE..echoes.{echo_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesechoidDELETEApiPermissionTestEchoesdevApiEchoesApi17E06010DELETEechoesechoid50FA8DC2"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/Default/echoes/{echo_id}/DELETE/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiechoesechoidDELETE33F7F1B7"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesApi/EchoesUsagePlan/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesApiEchoesUsagePlan82728BBE"
+          }
+        ],
+        "/Echoes-dev-Api/EchoesCognitoAuthorizer/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesCognitoAuthorizerF7D5DD59"
+          }
+        ],
+        "/Echoes-dev-Api/ApiGatewayUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ApiGatewayUrl"
+          }
+        ],
+        "/Echoes-dev-Api/ApiGatewayId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ApiGatewayId"
+          }
+        ],
+        "/Echoes-dev-Api/LambdaFunctionArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaFunctionArn"
+          }
+        ],
+        "/Echoes-dev-Api/LambdaFunctionName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaFunctionName"
+          }
+        ],
+        "/Echoes-dev-Api/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Echoes-dev-Api/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Echoes-dev-Api/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Echoes-dev-Api"
+    },
+    "Echoes-dev-Notif.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Echoes-dev-Notif.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Echoes-dev-Notif": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://418272766513/us-east-1",
+      "properties": {
+        "templateFile": "Echoes-dev-Notif.template.json",
+        "terminationProtection": false,
+        "tags": {
+          "C": "D",
+          "d": "e",
+          "E": "c"
+        },
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-deploy-role-418272766513-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-cfn-exec-role-418272766513-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-418272766513-us-east-1/c088bfcafcd3b6985b152e2629e349aa88dab49119198a68bc2b1c569ffd0a81.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Echoes-dev-Notif.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::418272766513:role/cdk-hnb659fds-lookup-role-418272766513-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Echoes-dev-Storage",
+        "Echoes-dev-Notif.assets"
+      ],
+      "metadata": {
+        "/Echoes-dev-Notif": [
+          {
+            "type": "aws:cdk:stack-tags",
+            "data": [
+              {
+                "Key": "C",
+                "Value": "D"
+              },
+              {
+                "Key": "d",
+                "Value": "e"
+              },
+              {
+                "Key": "E",
+                "Value": "c"
+              }
+            ]
+          }
+        ],
+        "/Echoes-dev-Notif/EchoesEventBus/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesEventBus28950D13"
+          }
+        ],
+        "/Echoes-dev-Notif/EchoesNotificationTopic/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoesNotificationTopic42CDF0DE"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationDLQ/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationDLQCDA15FAF"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationQueue/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationQueue36610CC1"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationQueue/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationQueuePolicyCC060EA6"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationQueue/EchoesdevNotifEchoesNotificationTopic797E20BF/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationQueueEchoesdevNotifEchoesNotificationTopic797E20BF63BA09ED"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationLambdaRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationLambdaRole8517A721"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationLambdaRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationLambdaRoleDefaultPolicy07D18877"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationLambda/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationLambda0BF28E71"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationLambda/SqsEventSource:EchoesdevNotifNotificationQueue34B8E985/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationLambdaSqsEventSourceEchoesdevNotifNotificationQueue34B8E9858283472C"
+          }
+        ],
+        "/Echoes-dev-Notif/EchoCreatedRule/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoCreatedRule118BEF1B"
+          }
+        ],
+        "/Echoes-dev-Notif/EchoCreatedRule/AllowEventRuleEchoesdevNotifNotificationLambda4143BEC6": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EchoCreatedRuleAllowEventRuleEchoesdevNotifNotificationLambda4143BEC650A8B088"
+          }
+        ],
+        "/Echoes-dev-Notif/ReminderRule/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ReminderRule0879F2D0"
+          }
+        ],
+        "/Echoes-dev-Notif/ReminderRule/AllowEventRuleEchoesdevNotifNotificationLambda4143BEC6": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ReminderRuleAllowEventRuleEchoesdevNotifNotificationLambda4143BEC638655A2E"
+          }
+        ],
+        "/Echoes-dev-Notif/DailyMaintenanceRule/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DailyMaintenanceRuleD77C9C88"
+          }
+        ],
+        "/Echoes-dev-Notif/DailyMaintenanceRule/AllowEventRuleEchoesdevNotifNotificationLambda4143BEC6": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DailyMaintenanceRuleAllowEventRuleEchoesdevNotifNotificationLambda4143BEC68B0FF2A6"
+          }
+        ],
+        "/Echoes-dev-Notif/EventBusArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EventBusArn"
+          }
+        ],
+        "/Echoes-dev-Notif/EventBusName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EventBusName"
+          }
+        ],
+        "/Echoes-dev-Notif/SnsTopicArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SnsTopicArn"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationLambdaArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationLambdaArn"
+          }
+        ],
+        "/Echoes-dev-Notif/NotificationQueueUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NotificationQueueUrl"
+          }
+        ],
+        "/Echoes-dev-Notif/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Echoes-dev-Notif/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Echoes-dev-Notif/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Echoes-dev-Notif"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  }
+}

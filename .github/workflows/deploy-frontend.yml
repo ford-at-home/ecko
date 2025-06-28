@@ -1,0 +1,461 @@
+name: 🎨 Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'web/**'
+      - 'mobile/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      platform:
+        description: 'Platform to deploy'
+        required: true
+        default: 'web'
+        type: choice
+        options:
+        - web
+        - mobile
+        - both
+
+concurrency:
+  group: frontend-${{ github.event.inputs.environment || 'dev' }}-${{ github.event.inputs.platform || 'web' }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  prepare:
+    name: 🔧 Prepare Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      platform: ${{ steps.platform.outputs.platform }}
+      deploy-web: ${{ steps.platform.outputs.deploy-web }}
+      deploy-mobile: ${{ steps.platform.outputs.deploy-mobile }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event.inputs.environment }}" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine platform
+        id: platform
+        run: |
+          PLATFORM="${{ github.event.inputs.platform || 'web' }}"
+          echo "platform=$PLATFORM" >> $GITHUB_OUTPUT
+          
+          if [[ "$PLATFORM" == "web" || "$PLATFORM" == "both" ]]; then
+            echo "deploy-web=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy-web=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [[ "$PLATFORM" == "mobile" || "$PLATFORM" == "both" ]]; then
+            echo "deploy-mobile=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy-mobile=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate version
+        id: version
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          VERSION="${TIMESTAMP}-${SHORT_SHA}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  build-web:
+    name: 🌐 Build Web Application
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: ${{ needs.prepare.outputs.deploy-web == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Load environment configuration
+        run: |
+          cp environments/${{ needs.prepare.outputs.environment }}/.env.frontend .env
+          echo "REACT_APP_VERSION=${{ needs.prepare.outputs.version }}" >> .env
+          echo "REACT_APP_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> .env
+
+      - name: Build web application
+        run: npm run build:web
+        env:
+          CI: false
+          GENERATE_SOURCEMAP: ${{ needs.prepare.outputs.environment != 'prod' }}
+
+      - name: Run web tests
+        run: npm run test:web
+        env:
+          CI: true
+
+      - name: Generate build report
+        run: |
+          npm run analyze:web
+          ls -la build/
+
+      - name: Upload web build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-build-${{ needs.prepare.outputs.environment }}
+          path: |
+            build/
+            !build/**/*.map
+          retention-days: 30
+
+      - name: Upload source maps (non-prod)
+        if: ${{ needs.prepare.outputs.environment != 'prod' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-sourcemaps-${{ needs.prepare.outputs.environment }}
+          path: build/**/*.map
+          retention-days: 7
+
+  build-mobile:
+    name: 📱 Build Mobile Application
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: ${{ needs.prepare.outputs.deploy-mobile == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Expo CLI
+        run: npm install -g @expo/cli
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Load environment configuration
+        run: |
+          cp environments/${{ needs.prepare.outputs.environment }}/.env.mobile .env
+          echo "EXPO_PUBLIC_VERSION=${{ needs.prepare.outputs.version }}" >> .env
+          echo "EXPO_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> .env
+
+      - name: Build mobile application
+        run: |
+          if [[ "${{ needs.prepare.outputs.environment }}" == "prod" ]]; then
+            expo build:web --no-minify
+          else
+            expo build:web
+          fi
+
+      - name: Run mobile tests
+        run: npm run test:mobile
+        env:
+          CI: true
+
+      - name: Upload mobile build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: mobile-build-${{ needs.prepare.outputs.environment }}
+          path: |
+            web-build/
+            expo-build/
+          retention-days: 30
+
+  deploy-web-s3:
+    name: 🚀 Deploy Web to S3
+    runs-on: ubuntu-latest
+    needs: [prepare, build-web]
+    if: ${{ needs.prepare.outputs.deploy-web == 'true' }}
+    environment:
+      name: ${{ needs.prepare.outputs.environment }}
+      url: ${{ steps.deploy.outputs.website-url }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Download web build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: web-build-${{ needs.prepare.outputs.environment }}
+          path: build/
+
+      - name: Deploy to S3
+        id: deploy
+        run: |
+          BUCKET_NAME="echoes-web-${{ needs.prepare.outputs.environment }}"
+          
+          # Sync build files to S3
+          aws s3 sync build/ s3://$BUCKET_NAME/ \
+            --exclude "*.map" \
+            --cache-control "public,max-age=31536000,immutable" \
+            --metadata-directive REPLACE \
+            --metadata version="${{ needs.prepare.outputs.version }}"
+          
+          # Set cache control for HTML files
+          aws s3 cp s3://$BUCKET_NAME/index.html s3://$BUCKET_NAME/index.html \
+            --cache-control "public,max-age=0,must-revalidate" \
+            --metadata-directive REPLACE \
+            --metadata version="${{ needs.prepare.outputs.version }}"
+          
+          # Get CloudFront distribution ID
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
+            --stack-name EchoesWebStack-${{ needs.prepare.outputs.environment }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`DistributionId`].OutputValue' \
+            --output text)
+          
+          # Create CloudFront invalidation
+          if [[ -n "$DISTRIBUTION_ID" ]]; then
+            INVALIDATION_ID=$(aws cloudfront create-invalidation \
+              --distribution-id $DISTRIBUTION_ID \
+              --paths "/*" \
+              --query 'Invalidation.Id' \
+              --output text)
+            echo "CloudFront invalidation created: $INVALIDATION_ID"
+          fi
+          
+          # Get website URL
+          WEBSITE_URL=$(aws cloudformation describe-stacks \
+            --stack-name EchoesWebStack-${{ needs.prepare.outputs.environment }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebsiteUrl`].OutputValue' \
+            --output text)
+          
+          echo "website-url=$WEBSITE_URL" >> $GITHUB_OUTPUT
+
+  deploy-mobile-store:
+    name: 📱 Deploy Mobile to App Stores
+    runs-on: ubuntu-latest
+    needs: [prepare, build-mobile]
+    if: ${{ needs.prepare.outputs.deploy-mobile == 'true' && needs.prepare.outputs.environment == 'prod' }}
+    environment:
+      name: production-mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Expo CLI
+        run: npm install -g @expo/cli eas-cli
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure Expo
+        run: |
+          echo "${{ secrets.EXPO_TOKEN }}" | expo login --non-interactive
+
+      - name: Build and submit to App Store
+        if: ${{ vars.DEPLOY_IOS == 'true' }}
+        run: |
+          eas build --platform ios --profile production
+          eas submit --platform ios --profile production
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_APPLE_ID: ${{ secrets.EXPO_APPLE_ID }}
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+
+      - name: Build and submit to Google Play
+        if: ${{ vars.DEPLOY_ANDROID == 'true' }}
+        run: |
+          eas build --platform android --profile production
+          eas submit --platform android --profile production
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  deploy-mobile-web:
+    name: 📱 Deploy Mobile Web Build
+    runs-on: ubuntu-latest
+    needs: [prepare, build-mobile]
+    if: ${{ needs.prepare.outputs.deploy-mobile == 'true' && needs.prepare.outputs.environment != 'prod' }}
+    environment:
+      name: ${{ needs.prepare.outputs.environment }}-mobile
+      url: ${{ steps.deploy.outputs.website-url }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Download mobile build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: mobile-build-${{ needs.prepare.outputs.environment }}
+          path: web-build/
+
+      - name: Deploy mobile web to S3
+        id: deploy
+        run: |
+          BUCKET_NAME="echoes-mobile-${{ needs.prepare.outputs.environment }}"
+          
+          # Sync mobile web build to S3
+          aws s3 sync web-build/ s3://$BUCKET_NAME/ \
+            --cache-control "public,max-age=31536000,immutable" \
+            --metadata-directive REPLACE \
+            --metadata version="${{ needs.prepare.outputs.version }}"
+          
+          # Set cache control for HTML files
+          aws s3 cp s3://$BUCKET_NAME/index.html s3://$BUCKET_NAME/index.html \
+            --cache-control "public,max-age=0,must-revalidate" \
+            --metadata-directive REPLACE
+          
+          # Get website URL
+          WEBSITE_URL="https://$BUCKET_NAME.s3.amazonaws.com"
+          echo "website-url=$WEBSITE_URL" >> $GITHUB_OUTPUT
+
+  e2e-tests:
+    name: 🧪 End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-web-s3]
+    if: ${{ needs.prepare.outputs.deploy-web == 'true' && needs.prepare.outputs.environment != 'prod' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: |
+          npx playwright test
+        env:
+          BASE_URL: ${{ needs.deploy-web-s3.outputs.website-url }}
+          ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-test-results-${{ needs.prepare.outputs.environment }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+  performance-audit:
+    name: ⚡ Performance Audit
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-web-s3]
+    if: ${{ needs.prepare.outputs.deploy-web == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+
+      - name: Run Lighthouse audit
+        run: |
+          lhci autorun --upload.target=filesystem --upload.outputDir=./lhci-results
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          LHCI_BUILD_CONTEXT__CURRENT_HASH: ${{ github.sha }}
+          LHCI_BUILD_CONTEXT__COMMIT_TIME: ${{ github.event.head_commit.timestamp }}
+          LHCI_BUILD_CONTEXT__CURRENT_BRANCH: ${{ github.ref_name }}
+          LHCI_BUILD_CONTEXT__COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-results-${{ needs.prepare.outputs.environment }}
+          path: lhci-results/
+          retention-days: 30
+
+  notify:
+    name: 📢 Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-web-s3, deploy-mobile-web, deploy-mobile-store, e2e-tests, performance-audit]
+    if: always()
+    steps:
+      - name: Create deployment summary
+        run: |
+          echo "# 🎨 Frontend Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ needs.prepare.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platform:** ${{ needs.prepare.outputs.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.prepare.outputs.deploy-web }}" == "true" ]]; then
+            echo "## 🌐 Web Deployment" >> $GITHUB_STEP_SUMMARY
+            echo "**Status:** ${{ needs.deploy-web-s3.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "**URL:** ${{ needs.deploy-web-s3.outputs.website-url }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.prepare.outputs.deploy-mobile }}" == "true" ]]; then
+            echo "## 📱 Mobile Deployment" >> $GITHUB_STEP_SUMMARY
+            if [[ "${{ needs.prepare.outputs.environment }}" == "prod" ]]; then
+              echo "**Status:** ${{ needs.deploy-mobile-store.result }}" >> $GITHUB_STEP_SUMMARY
+              echo "**Target:** App Stores" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "**Status:** ${{ needs.deploy-mobile-web.result }}" >> $GITHUB_STEP_SUMMARY
+              echo "**URL:** ${{ needs.deploy-mobile-web.outputs.website-url }}" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ${{ needs.e2e-tests.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance Audit | ${{ needs.performance-audit.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,64 @@
+{
+  "environment": "prod",
+  "region": "us-east-1",
+  "settings": {
+    "enableDetailedMonitoring": true,
+    "enableXRayTracing": true,
+    "logLevel": "ERROR",
+    "corsOrigins": [
+      "https://echoes.app",
+      "https://www.echoes.app",
+      "https://app.echoes.com"
+    ],
+    "apiThrottling": {
+      "rateLimit": 1000,
+      "burstLimit": 2000
+    },
+    "s3": {
+      "enableVersioning": true,
+      "lifecycleRules": {
+        "transitionToIA": 30,
+        "deleteIncompleteUploads": 1
+      }
+    },
+    "dynamodb": {
+      "enablePointInTimeRecovery": true,
+      "billingMode": "PAY_PER_REQUEST"
+    },
+    "cognito": {
+      "passwordPolicy": {
+        "minLength": 12,
+        "requireUppercase": true,
+        "requireLowercase": true,
+        "requireNumbers": true,
+        "requireSymbols": true
+      },
+      "tokenValidity": {
+        "accessToken": "1h",
+        "idToken": "1h",
+        "refreshToken": "30d"
+      }
+    },
+    "notifications": {
+      "enableEmailNotifications": true,
+      "enablePushNotifications": true,
+      "reminderSchedule": {
+        "daily": "10:00",
+        "weekly": "SUN 09:00"
+      }
+    },
+    "lambda": {
+      "timeout": 30,
+      "memorySize": 512,
+      "logRetention": "3 MONTHS"
+    }
+  },
+  "tags": {
+    "Environment": "prod",
+    "Project": "Echoes",
+    "Owner": "EchoesTeam",
+    "CostCenter": "Engineering",
+    "Backup": "true",
+    "Compliance": "required"
+  }
+}

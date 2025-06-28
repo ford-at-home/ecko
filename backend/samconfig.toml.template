@@ -1,0 +1,63 @@
+# SAM Configuration Template
+# Copy this to samconfig.toml and customize for your environment
+
+version = 0.1
+
+[default]
+[default.build]
+[default.build.parameters]
+use_container = true
+cached = true
+parallel = true
+
+[default.validate]
+[default.validate.parameters]
+lint = true
+
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "echoes-dev-backend"
+s3_bucket = "sam-deploy-YOUR_ACCOUNT_ID-us-east-1" 
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev"
+# profile = "your-aws-profile"  # Uncomment and set your AWS profile
+tags = "Project=Echoes Environment=dev"
+
+[staging]
+[staging.build]
+[staging.build.parameters]
+use_container = true
+cached = true
+parallel = true
+
+[staging.deploy]
+[staging.deploy.parameters]
+stack_name = "echoes-staging-backend"
+s3_bucket = "sam-deploy-YOUR_ACCOUNT_ID-us-east-1"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=staging"
+# profile = "your-aws-profile"
+tags = "Project=Echoes Environment=staging"
+
+[production]
+[production.build]
+[production.build.parameters]
+use_container = true
+cached = true
+parallel = true
+
+[production.deploy]
+[production.deploy.parameters]
+stack_name = "echoes-prod-backend"
+s3_bucket = "sam-deploy-YOUR_ACCOUNT_ID-us-east-1"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=prod"
+# profile = "your-production-profile"
+tags = "Project=Echoes Environment=prod"
+fail_on_empty_changeset = false

@@ -1,0 +1,59 @@
+{
+  "environment": "dev",
+  "region": "us-east-1",
+  "settings": {
+    "enableDetailedMonitoring": true,
+    "enableXRayTracing": true,
+    "logLevel": "INFO",
+    "corsOrigins": ["*"],
+    "apiThrottling": {
+      "rateLimit": 100,
+      "burstLimit": 200
+    },
+    "s3": {
+      "enableVersioning": false,
+      "lifecycleRules": {
+        "transitionToIA": 30,
+        "deleteIncompleteUploads": 1
+      }
+    },
+    "dynamodb": {
+      "enablePointInTimeRecovery": false,
+      "billingMode": "PAY_PER_REQUEST"
+    },
+    "cognito": {
+      "passwordPolicy": {
+        "minLength": 8,
+        "requireUppercase": true,
+        "requireLowercase": true,
+        "requireNumbers": true,
+        "requireSymbols": false
+      },
+      "tokenValidity": {
+        "accessToken": "1h",
+        "idToken": "1h",
+        "refreshToken": "30d"
+      }
+    },
+    "notifications": {
+      "enableEmailNotifications": true,
+      "enablePushNotifications": false,
+      "reminderSchedule": {
+        "daily": "10:00",
+        "weekly": "SUN 09:00"
+      }
+    },
+    "lambda": {
+      "timeout": 30,
+      "memorySize": 256,
+      "logRetention": "1 MONTH"
+    }
+  },
+  "tags": {
+    "Environment": "dev",
+    "Project": "Echoes",
+    "Owner": "EchoesTeam",
+    "CostCenter": "Engineering",
+    "Backup": "false"
+  }
+}

@@ -1,0 +1,177 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Echoes Local Development SAM Template
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: python3.11
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref Environment
+        AWS_ENDPOINT_URL: http://host.docker.internal:4566
+        DYNAMODB_TABLE_NAME: !Sub 'EchoesTable-${Environment}'
+        S3_BUCKET_NAME: !Sub 'echoes-audio-${Environment}'
+        COGNITO_USER_POOL_ID: us-east-1_xxxxxxxxx
+        COGNITO_CLIENT_ID: xxxxxxxxxxxxxxxxxxxxxxxxxx
+        SNS_TOPIC_ARN: !Sub 'arn:aws:sns:us-east-1:000000000000:echoes-notifications-${Environment}'
+        LOG_LEVEL: debug
+        CORS_ALLOW_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'content-type,authorization,x-api-key'"
+      AllowOrigin: "'*'"
+      MaxAge: "'600'"
+
+Resources:
+  # API Gateway
+  EchoesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'content-type,authorization,x-api-key'"
+        AllowOrigin: "'*'"
+        MaxAge: "'600'"
+      Auth:
+        DefaultAuthorizer: CognitoAuth
+        Authorizers:
+          CognitoAuth:
+            UserPoolArn: !Sub 'arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/us-east-1_xxxxxxxxx'
+
+  # Lambda Functions
+  InitUploadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'echoes-${Environment}-init-upload'
+      CodeUri: lambda/init_upload/
+      Handler: app.lambda_handler
+      Description: Initialize S3 presigned upload URL
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref EchoesApi
+            Path: /echoes/init-upload
+            Method: post
+      Policies:
+        - S3WritePolicy:
+            BucketName: !Sub 'echoes-audio-${Environment}'
+        - DynamoDBReadPolicy:
+            TableName: !Sub 'EchoesTable-${Environment}'
+
+  SaveEchoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'echoes-${Environment}-save-echo'
+      CodeUri: lambda/save_echo/
+      Handler: app.lambda_handler
+      Description: Save echo metadata to DynamoDB
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref EchoesApi
+            Path: /echoes
+            Method: post
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Sub 'EchoesTable-${Environment}'
+        - SNSPublishMessagePolicy:
+            TopicName: !Sub 'echoes-notifications-${Environment}'
+
+  GetEchoesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'echoes-${Environment}-get-echoes'
+      CodeUri: lambda/get_echoes/
+      Handler: app.lambda_handler
+      Description: Get user's echoes with optional filtering
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref EchoesApi
+            Path: /echoes
+            Method: get
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Sub 'EchoesTable-${Environment}'
+
+  GetRandomEchoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'echoes-${Environment}-get-random-echo'
+      CodeUri: lambda/get_random_echo/
+      Handler: app.lambda_handler
+      Description: Get a random echo based on emotion
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref EchoesApi
+            Path: /echoes/random
+            Method: get
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Sub 'EchoesTable-${Environment}'
+
+  HealthCheckFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'echoes-${Environment}-health-check'
+      CodeUri: lambda/health_check/
+      Handler: app.lambda_handler
+      Description: API health check endpoint
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref EchoesApi
+            Path: /health
+            Method: get
+            Auth:
+              Authorizer: NONE
+
+  # Scheduled notification function
+  NotificationSchedulerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'echoes-${Environment}-notification-scheduler'
+      CodeUri: lambda/notification_scheduler/
+      Handler: app.lambda_handler
+      Description: Schedule echo notifications
+      Events:
+        ScheduledEvent:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 9 * * ? *)  # Daily at 9 AM UTC
+            Enabled: false  # Disabled for local development
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Sub 'EchoesTable-${Environment}'
+        - SNSPublishMessagePolicy:
+            TopicName: !Sub 'echoes-notifications-${Environment}'
+
+Outputs:
+  EchoesApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${EchoesApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+
+  EchoesApiId:
+    Description: API Gateway ID
+    Value: !Ref EchoesApi
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiId'

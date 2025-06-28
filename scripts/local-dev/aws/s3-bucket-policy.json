@@ -1,0 +1,42 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowPublicRead",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::echoes-audio-dev/public/*"
+    },
+    {
+      "Sid": "AllowCognitoAuthenticatedUsers",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::echoes-audio-dev/private/${cognito-identity.amazonaws.com:sub}/*",
+      "Condition": {
+        "StringEquals": {
+          "s3:x-amz-acl": "private"
+        }
+      }
+    },
+    {
+      "Sid": "AllowPresignedUploads",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::echoes-audio-dev/uploads/*",
+      "Condition": {
+        "StringEquals": {
+          "s3:x-amz-acl": "private"
+        }
+      }
+    }
+  ]
+}

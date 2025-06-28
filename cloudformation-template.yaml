@@ -1,0 +1,362 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Echoes Audio Time Machine - DynamoDB Table and Indexes'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name for resource naming
+  
+  BillingMode:
+    Type: String
+    Default: PAY_PER_REQUEST
+    AllowedValues: [PAY_PER_REQUEST, PROVISIONED]
+    Description: DynamoDB billing mode
+  
+  ReadCapacityUnits:
+    Type: Number
+    Default: 100
+    MinValue: 1
+    MaxValue: 40000
+    Description: Provisioned read capacity units (only used if PROVISIONED billing)
+  
+  WriteCapacityUnits:
+    Type: Number
+    Default: 100
+    MinValue: 1
+    MaxValue: 40000
+    Description: Provisioned write capacity units (only used if PROVISIONED billing)
+
+Conditions:
+  IsProvisioned: !Equals [!Ref BillingMode, PROVISIONED]
+  IsProduction: !Equals [!Ref Environment, prod]
+
+Resources:
+  # Main DynamoDB Table
+  EchoesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'EchoesTable-${Environment}'
+      BillingMode: !Ref BillingMode
+      
+      # Key Schema
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      
+      # Attribute Definitions
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+        - AttributeName: emotion
+          AttributeType: S
+        - AttributeName: echoId
+          AttributeType: S
+      
+      # Provisioned Throughput (only if PROVISIONED mode)
+      ProvisionedThroughput: !If
+        - IsProvisioned
+        - ReadCapacityUnits: !Ref ReadCapacityUnits
+          WriteCapacityUnits: !Ref WriteCapacityUnits
+        - !Ref AWS::NoValue
+      
+      # Global Secondary Indexes
+      GlobalSecondaryIndexes:
+        # GSI 1: Emotion-Timestamp Index
+        - IndexName: emotion-timestamp-index
+          KeySchema:
+            - AttributeName: emotion
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput: !If
+            - IsProvisioned
+            - ReadCapacityUnits: !Ref ReadCapacityUnits
+              WriteCapacityUnits: !Ref WriteCapacityUnits
+            - !Ref AWS::NoValue
+        
+        # GSI 2: EchoId Index
+        - IndexName: echoId-index
+          KeySchema:
+            - AttributeName: echoId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput: !If
+            - IsProvisioned
+            - ReadCapacityUnits: !Ref ReadCapacityUnits
+              WriteCapacityUnits: !Ref WriteCapacityUnits
+            - !Ref AWS::NoValue
+        
+        # GSI 3: User-Emotion Index
+        - IndexName: userId-emotion-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: emotion
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - timestamp
+              - echoId
+              - s3Url
+              - location
+              - tags
+              - detectedMood
+              - transcript
+              - metadata
+          ProvisionedThroughput: !If
+            - IsProvisioned
+            - ReadCapacityUnits: !Ref ReadCapacityUnits
+              WriteCapacityUnits: !Ref WriteCapacityUnits
+            - !Ref AWS::NoValue
+      
+      # DynamoDB Streams
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      
+      # TTL Configuration
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      
+      # Point-in-time Recovery
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+      
+      # Server-side Encryption
+      SSESpecification:
+        SSEEnabled: true
+        KMSMasterKeyId: !If 
+          - IsProduction
+          - !Ref EchoesKMSKey
+          - alias/aws/dynamodb
+      
+      # Backup Policy (Production only)
+      BackupPolicy: !If
+        - IsProduction
+        - PointInTimeRecoveryEnabled: true
+        - !Ref AWS::NoValue
+      
+      # Tags
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: Echoes
+        - Key: Component
+          Value: Database
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # KMS Key for Production Encryption
+  EchoesKMSKey:
+    Type: AWS::KMS::Key
+    Condition: IsProduction
+    Properties:
+      Description: 'KMS Key for Echoes DynamoDB Table encryption'
+      KeyPolicy:
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow DynamoDB Service
+            Effect: Allow
+            Principal:
+              Service: dynamodb.amazonaws.com
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: Echoes
+
+  # KMS Key Alias
+  EchoesKMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Condition: IsProduction
+    Properties:
+      AliasName: !Sub 'alias/echoes-${Environment}'
+      TargetKeyId: !Ref EchoesKMSKey
+
+  # Auto Scaling Target for Read Capacity
+  ReadCapacityScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Condition: IsProvisioned
+    Properties:
+      ServiceNamespace: dynamodb
+      ResourceId: !Sub 'table/${EchoesTable}'
+      ScalableDimension: dynamodb:table:ReadCapacityUnits
+      MinCapacity: 5
+      MaxCapacity: 4000
+      RoleARN: !GetAtt DynamoDBAutoscaleRole.Arn
+
+  # Auto Scaling Target for Write Capacity  
+  WriteCapacityScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Condition: IsProvisioned
+    Properties:
+      ServiceNamespace: dynamodb
+      ResourceId: !Sub 'table/${EchoesTable}'
+      ScalableDimension: dynamodb:table:WriteCapacityUnits
+      MinCapacity: 5
+      MaxCapacity: 4000
+      RoleARN: !GetAtt DynamoDBAutoscaleRole.Arn
+
+  # Auto Scaling Policy for Read Capacity
+  ReadCapacityScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Condition: IsProvisioned
+    Properties:
+      PolicyName: !Sub '${EchoesTable}-ReadCapacity-ScalingPolicy'
+      PolicyType: TargetTrackingScaling
+      ServiceNamespace: dynamodb
+      ResourceId: !Sub 'table/${EchoesTable}'
+      ScalableDimension: dynamodb:table:ReadCapacityUnits
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
+        ScaleOutCooldown: 60
+        ScaleInCooldown: 300
+
+  # Auto Scaling Policy for Write Capacity
+  WriteCapacityScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Condition: IsProvisioned
+    Properties:
+      PolicyName: !Sub '${EchoesTable}-WriteCapacity-ScalingPolicy'
+      PolicyType: TargetTrackingScaling
+      ServiceNamespace: dynamodb
+      ResourceId: !Sub 'table/${EchoesTable}'
+      ScalableDimension: dynamodb:table:WriteCapacityUnits
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+        ScaleOutCooldown: 60
+        ScaleInCooldown: 300
+
+  # IAM Role for DynamoDB Auto Scaling
+  DynamoDBAutoscaleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/DynamoDBAutoscaleRole
+
+  # CloudWatch Alarms
+  HighLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EchoesTable}-HighLatency'
+      AlarmDescription: 'DynamoDB table has high query latency'
+      MetricName: SuccessfulRequestLatency
+      Namespace: AWS/DynamoDB
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 100
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: TableName
+          Value: !Ref EchoesTable
+        - Name: Operation
+          Value: Query
+      AlarmActions:
+        - !Ref EchoesAlertsSnsTopic
+
+  # Throttling Alarm
+  ThrottlingAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EchoesTable}-Throttling'
+      AlarmDescription: 'DynamoDB table is experiencing throttling'
+      MetricName: ReadThrottledRequests
+      Namespace: AWS/DynamoDB
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: TableName
+          Value: !Ref EchoesTable
+      AlarmActions:
+        - !Ref EchoesCriticalSnsTopic
+
+  # SNS Topics for Alerts
+  EchoesAlertsSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'echoes-alerts-${Environment}'
+      DisplayName: 'Echoes Application Alerts'
+      
+  EchoesCriticalSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'echoes-critical-${Environment}'
+      DisplayName: 'Echoes Critical Alerts'
+
+Outputs:
+  TableName:
+    Description: 'Name of the DynamoDB table'
+    Value: !Ref EchoesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-TableName'
+  
+  TableArn:
+    Description: 'ARN of the DynamoDB table'
+    Value: !GetAtt EchoesTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-TableArn'
+  
+  StreamArn:
+    Description: 'ARN of the DynamoDB stream'
+    Value: !GetAtt EchoesTable.StreamArn
+    Export:
+      Name: !Sub '${AWS::StackName}-StreamArn'
+  
+  EmotionTimestampIndexName:
+    Description: 'Name of the emotion-timestamp GSI'
+    Value: emotion-timestamp-index
+    Export:
+      Name: !Sub '${AWS::StackName}-EmotionTimestampIndex'
+  
+  EchoIdIndexName:
+    Description: 'Name of the echoId GSI'
+    Value: echoId-index
+    Export:
+      Name: !Sub '${AWS::StackName}-EchoIdIndex'
+  
+  UserEmotionIndexName:
+    Description: 'Name of the userId-emotion GSI'
+    Value: userId-emotion-index
+    Export:
+      Name: !Sub '${AWS::StackName}-UserEmotionIndex'
+  
+  KMSKeyId:
+    Condition: IsProduction
+    Description: 'KMS Key ID for encryption'
+    Value: !Ref EchoesKMSKey
+    Export:
+      Name: !Sub '${AWS::StackName}-KMSKeyId'

@@ -1,0 +1,108 @@
+# Multi-stage build for Python FastAPI backend
+FROM python:3.11-slim AS base
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONHASHSEED=random \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100
+
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+        libpq-dev \
+        && rm -rf /var/lib/apt/lists/*
+
+# Create app user
+RUN addgroup --system app && adduser --system --group app
+
+# Dependencies stage
+FROM base AS deps
+
+# Set work directory
+WORKDIR /app
+
+# Copy dependency files
+COPY requirements.txt requirements-dev.txt* ./
+
+# Install Python dependencies
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt \
+    && if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
+# Development stage
+FROM deps AS development
+
+# Copy source code
+COPY . .
+
+# Change ownership to app user
+RUN chown -R app:app /app
+USER app
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run the application with auto-reload
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# Production stage
+FROM base AS production
+
+# Install only production dependencies
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt \
+    && pip install gunicorn
+
+# Copy source code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/logs \
+    && mkdir -p /app/tmp
+
+# Change ownership to app user
+RUN chown -R app:app /app
+USER app
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Production command with Gunicorn
+CMD ["gunicorn", "app.main:app", \
+     "--bind", "0.0.0.0:8000", \
+     "--workers", "4", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info"]
+
+# Testing stage
+FROM deps AS testing
+
+# Install test dependencies
+RUN pip install pytest pytest-cov pytest-asyncio httpx
+
+# Copy source code
+COPY . .
+
+# Change ownership to app user
+RUN chown -R app:app /app
+USER app
+
+# Run tests
+CMD ["pytest", "--cov=app", "--cov-report=xml", "--cov-report=html", "--cov-report=term"]

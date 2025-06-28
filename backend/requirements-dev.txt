@@ -1,0 +1,66 @@
+# =============================================================================
+# Echoes Development Requirements
+# Additional dependencies for local development and testing
+# =============================================================================
+
+# Include all production requirements
+-r requirements-lambda.txt
+
+# =============================================================================
+# Testing Framework
+# =============================================================================
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+httpx==0.25.2  # For testing FastAPI endpoints
+
+# =============================================================================
+# Code Quality & Formatting
+# =============================================================================
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+isort==5.12.0
+pre-commit==3.5.0
+
+# =============================================================================
+# Development Server
+# =============================================================================
+watchfiles==0.21.0  # For auto-reload during development
+
+# =============================================================================
+# Database & Local Development
+# =============================================================================
+# SQLAlchemy for local development database
+sqlalchemy==2.0.23
+alembic==1.13.0
+
+# Local database drivers (not needed in Lambda)
+# sqlite3 is built into Python
+aiosqlite==0.19.0
+
+# =============================================================================
+# Documentation
+# =============================================================================
+mkdocs==1.5.3
+mkdocs-material==9.4.8
+
+# =============================================================================
+# Debugging & Profiling
+# =============================================================================
+debugpy==1.8.0
+memory-profiler==0.61.0
+
+# =============================================================================
+# AWS Local Development
+# =============================================================================
+moto==4.2.11  # Mock AWS services for testing
+localstack-client==1.41.0  # LocalStack integration
+
+# =============================================================================
+# Additional Development Utilities
+# =============================================================================
+python-dotenv==1.0.0  # Environment variable management
+rich==13.7.0  # Better console output
+typer==0.9.0  # CLI development

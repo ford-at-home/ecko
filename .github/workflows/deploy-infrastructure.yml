@@ -1,0 +1,427 @@
+name: 🏗️ Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cdk/**'
+      - 'infrastructure/**'
+      - '.github/workflows/deploy-infrastructure.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging  
+        - prod
+      destroy:
+        description: 'Destroy infrastructure'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: infrastructure-${{ github.event.inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  validate:
+    name: 🔍 Validate Infrastructure
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event.inputs.environment }}" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g aws-cdk
+          python -m pip install --upgrade pip
+          pip install aws-cdk-lib constructs
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: CDK Bootstrap (if needed)
+        run: |
+          cd cdk
+          cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION || 'us-east-1' }} \
+            --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess
+
+      - name: CDK Synth
+        run: |
+          cd cdk
+          cdk synth --all
+        env:
+          ENVIRONMENT: ${{ steps.env.outputs.environment }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Upload CDK artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: cdk-artifacts-${{ steps.env.outputs.environment }}
+          path: cdk/cdk.out/
+          retention-days: 30
+
+  deploy-storage:
+    name: 🗄️ Deploy Storage Stack
+    runs-on: ubuntu-latest
+    needs: validate
+    environment: 
+      name: ${{ needs.validate.outputs.environment }}
+      url: https://console.aws.amazon.com/cloudformation/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g aws-cdk
+          python -m pip install --upgrade pip
+          pip install aws-cdk-lib constructs
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Deploy Storage Stack
+        run: |
+          cd cdk
+          cdk deploy EchoesStorageStack-${{ needs.validate.outputs.environment }} \
+            --require-approval never \
+            --progress events \
+            --outputs-file storage-outputs.json
+        env:
+          ENVIRONMENT: ${{ needs.validate.outputs.environment }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Save stack outputs
+        run: |
+          cd cdk
+          echo "STORAGE_OUTPUTS<<EOF" >> $GITHUB_ENV
+          cat storage-outputs.json >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Upload stack outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: storage-outputs-${{ needs.validate.outputs.environment }}
+          path: cdk/storage-outputs.json
+
+  deploy-auth:
+    name: 🔐 Deploy Auth Stack
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-storage]
+    environment: 
+      name: ${{ needs.validate.outputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g aws-cdk
+          python -m pip install --upgrade pip
+          pip install aws-cdk-lib constructs
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Deploy Auth Stack
+        run: |
+          cd cdk
+          cdk deploy EchoesAuthStack-${{ needs.validate.outputs.environment }} \
+            --require-approval never \
+            --progress events \
+            --outputs-file auth-outputs.json
+        env:
+          ENVIRONMENT: ${{ needs.validate.outputs.environment }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Upload stack outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: auth-outputs-${{ needs.validate.outputs.environment }}
+          path: cdk/auth-outputs.json
+
+  deploy-api:
+    name: 🚀 Deploy API Stack
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-storage, deploy-auth]
+    environment: 
+      name: ${{ needs.validate.outputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g aws-cdk
+          python -m pip install --upgrade pip
+          pip install aws-cdk-lib constructs
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Deploy API Stack
+        run: |
+          cd cdk
+          cdk deploy EchoesApiStack-${{ needs.validate.outputs.environment }} \
+            --require-approval never \
+            --progress events \
+            --outputs-file api-outputs.json
+        env:
+          ENVIRONMENT: ${{ needs.validate.outputs.environment }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Upload stack outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-outputs-${{ needs.validate.outputs.environment }}
+          path: cdk/api-outputs.json
+
+  deploy-notifications:
+    name: 🔔 Deploy Notifications Stack
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-storage, deploy-auth]
+    environment: 
+      name: ${{ needs.validate.outputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g aws-cdk
+          python -m pip install --upgrade pip
+          pip install aws-cdk-lib constructs
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Deploy Notifications Stack
+        run: |
+          cd cdk
+          cdk deploy EchoesNotifStack-${{ needs.validate.outputs.environment }} \
+            --require-approval never \
+            --progress events \
+            --outputs-file notifications-outputs.json
+        env:
+          ENVIRONMENT: ${{ needs.validate.outputs.environment }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Upload stack outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: notifications-outputs-${{ needs.validate.outputs.environment }}
+          path: cdk/notifications-outputs.json
+
+  smoke-tests:
+    name: 🧪 Infrastructure Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-storage, deploy-auth, deploy-api, deploy-notifications]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Download all stack outputs
+        uses: actions/download-artifact@v3
+        with:
+          pattern: "*-outputs-${{ needs.validate.outputs.environment }}"
+          merge-multiple: true
+
+      - name: Run infrastructure smoke tests
+        run: |
+          # Test S3 bucket accessibility
+          BUCKET_NAME=$(jq -r '.["EchoesStorageStack-${{ needs.validate.outputs.environment }}"].AudioBucketName' storage-outputs.json)
+          aws s3 ls s3://$BUCKET_NAME/ || echo "S3 bucket test failed"
+          
+          # Test DynamoDB table accessibility  
+          TABLE_NAME=$(jq -r '.["EchoesStorageStack-${{ needs.validate.outputs.environment }}"].EchoesTableName' storage-outputs.json)
+          aws dynamodb describe-table --table-name $TABLE_NAME || echo "DynamoDB table test failed"
+          
+          # Test API Gateway endpoint
+          API_URL=$(jq -r '.["EchoesApiStack-${{ needs.validate.outputs.environment }}"].ApiEndpoint' api-outputs.json)
+          curl -f $API_URL/health || echo "API health check failed"
+
+  destroy:
+    name: 💥 Destroy Infrastructure
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.destroy == 'true' }}
+    environment: 
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚠️ Confirm Destruction
+        run: |
+          echo "🚨 WARNING: This will destroy all infrastructure in ${{ github.event.inputs.environment }}"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Triggered by: ${{ github.actor }}"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g aws-cdk
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Destroy all stacks
+        run: |
+          cd cdk
+          cdk destroy --all --force
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+  notify:
+    name: 📢 Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-storage, deploy-auth, deploy-api, deploy-notifications, smoke-tests]
+    if: always()
+    steps:
+      - name: Create deployment summary
+        run: |
+          echo "# 🏗️ Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ needs.validate.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Region:** ${{ vars.AWS_REGION || 'us-east-1' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Stack Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Stack | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Storage | ${{ needs.deploy-storage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Auth | ${{ needs.deploy-auth.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| API | ${{ needs.deploy-api.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Notifications | ${{ needs.deploy-notifications.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Smoke Tests | ${{ needs.smoke-tests.result }} |" >> $GITHUB_STEP_SUMMARY

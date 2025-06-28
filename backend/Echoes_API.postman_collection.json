@@ -1,0 +1,959 @@
+{
+  "info": {
+    "name": "Echoes Audio Time Machine API",
+    "description": "Complete API collection for the Echoes Audio Time Machine - capturing moments as ambient sounds tied to emotion.\n\n## Setup Instructions\n\n1. **Import this collection** into Postman\n2. **Set up environment variables:**\n   - `base_url`: API base URL (e.g., `https://api.echoes.example.com`)\n   - `jwt_token`: Your JWT authentication token from Cognito\n   - `user_id`: Your user ID for testing\n3. **Run authentication** to get a valid JWT token\n4. **Test endpoints** starting with system health checks\n\n## Authentication\n\nThis API uses AWS Cognito JWT tokens. Include the token in the Authorization header:\n```\nAuthorization: Bearer {{jwt_token}}\n```\n\n## Rate Limits\n- Authenticated users: 100 requests/minute\n- Unauthenticated: 20 requests/minute",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://api.echoes.example.com",
+      "type": "string",
+      "description": "Base URL for the Echoes API"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT authentication token from AWS Cognito"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string",
+      "description": "User ID for testing"
+    },
+    {
+      "key": "echo_id",
+      "value": "",
+      "type": "string",
+      "description": "Echo ID for testing specific echo operations"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "System Endpoints",
+      "description": "Health checks and system information endpoints",
+      "item": [
+        {
+          "name": "API Root",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Basic API information and status. No authentication required."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/",
+                  "host": ["{{base_url}}"],
+                  "path": [""]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"message\": \"Echoes API is running\",\n  \"version\": \"1.0.0\",\n  \"docs\": \"/docs\",\n  \"health\": \"/health\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Comprehensive health check including AWS service connectivity status."
+          },
+          "response": [
+            {
+              "name": "Healthy Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/health",
+                  "host": ["{{base_url}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": \"healthy\",\n  \"service\": \"echoes-api\",\n  \"version\": \"1.0.0\",\n  \"environment\": \"production\",\n  \"dependencies\": {\n    \"aws_s3\": \"connected\",\n    \"aws_dynamodb\": \"connected\",\n    \"aws_cognito\": \"connected\"\n  },\n  \"timestamp\": \"2025-06-28T15:00:00Z\"\n}"
+            },
+            {
+              "name": "Unhealthy Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/health",
+                  "host": ["{{base_url}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "Service Unavailable",
+              "code": 503,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": \"unhealthy\",\n  \"service\": \"echoes-api\",\n  \"errors\": [\"DynamoDB connection failed\"]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Echo Management",
+      "description": "Core audio echo management endpoints",
+      "item": [
+        {
+          "name": "Initialize Upload",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"file_extension\": \"webm\",\n  \"content_type\": \"audio/webm\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes/init-upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes", "init-upload"]
+            },
+            "description": "Generate a presigned URL for direct audio file upload to S3. This is the first step in the two-phase upload process."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"file_extension\": \"webm\",\n  \"content_type\": \"audio/webm\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes/init-upload",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes", "init-upload"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"upload_url\": \"https://echoes-audio.s3.amazonaws.com/user123/echo-456.webm?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=...\",\n  \"echo_id\": \"echo-456\",\n  \"s3_key\": \"user123/echo-456.webm\",\n  \"expires_in\": 3600\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Store echo_id for subsequent requests",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('echo_id', response.echo_id);",
+                  "    pm.collectionVariables.set('upload_url', response.upload_url);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Echo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emotion\": \"joy\",\n  \"tags\": [\"river\", \"kids\", \"outdoors\"],\n  \"transcript\": \"Rio laughing and water splashing\",\n  \"detected_mood\": \"joyful\",\n  \"file_extension\": \"webm\",\n  \"duration_seconds\": 25.5,\n  \"location\": {\n    \"lat\": 37.5407,\n    \"lng\": -77.4360,\n    \"address\": \"James River, Richmond, VA\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes?echo_id={{echo_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes"],
+              "query": [
+                {
+                  "key": "echo_id",
+                  "value": "{{echo_id}}",
+                  "description": "Echo ID from init-upload response"
+                }
+              ]
+            },
+            "description": "Create echo metadata after successful S3 upload. This is the second step in the upload process."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"emotion\": \"joy\",\n  \"tags\": [\"river\", \"kids\", \"outdoors\"],\n  \"transcript\": \"Rio laughing and water splashing\",\n  \"detected_mood\": \"joyful\",\n  \"file_extension\": \"webm\",\n  \"duration_seconds\": 25.5,\n  \"location\": {\n    \"lat\": 37.5407,\n    \"lng\": -77.4360,\n    \"address\": \"James River, Richmond, VA\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes?echo_id=echo-456",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes"],
+                  "query": [
+                    {
+                      "key": "echo_id",
+                      "value": "echo-456"
+                    }
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"echo_id\": \"echo-456\",\n  \"emotion\": \"joy\",\n  \"timestamp\": \"2025-06-28T15:00:00Z\",\n  \"s3_url\": \"s3://echoes-audio/user123/echo-456.webm\",\n  \"location\": {\n    \"lat\": 37.5407,\n    \"lng\": -77.4360,\n    \"address\": \"James River, Richmond, VA\"\n  },\n  \"tags\": [\"river\", \"kids\", \"outdoors\"],\n  \"transcript\": \"Rio laughing and water splashing\",\n  \"detected_mood\": \"joyful\",\n  \"duration_seconds\": 25.5,\n  \"created_at\": \"2025-06-28T15:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Echoes",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes"],
+              "query": [
+                {
+                  "key": "emotion",
+                  "value": "joy",
+                  "description": "Filter by emotion (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20",
+                  "description": "Items per page (max: 100)"
+                }
+              ]
+            },
+            "description": "Get a paginated list of user's echoes with optional emotion filtering."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes?page=1&page_size=20",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "page_size",
+                      "value": "20"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"echoes\": [\n    {\n      \"echo_id\": \"echo-456\",\n      \"emotion\": \"joy\",\n      \"timestamp\": \"2025-06-28T15:00:00Z\",\n      \"s3_url\": \"s3://echoes-audio/user123/echo-456.webm\",\n      \"location\": {\n        \"lat\": 37.5407,\n        \"lng\": -77.4360,\n        \"address\": \"James River, Richmond, VA\"\n      },\n      \"tags\": [\"river\", \"kids\", \"outdoors\"],\n      \"transcript\": \"Rio laughing and water splashing\",\n      \"detected_mood\": \"joyful\",\n      \"duration_seconds\": 25.5,\n      \"created_at\": \"2025-06-28T15:00:00Z\"\n    }\n  ],\n  \"total_count\": 1,\n  \"page\": 1,\n  \"page_size\": 20,\n  \"has_more\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Echoes - Filtered by Emotion",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes?emotion=calm&page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes"],
+              "query": [
+                {
+                  "key": "emotion",
+                  "value": "calm",
+                  "description": "Filter by calm emotion"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Example of filtering echoes by specific emotion (calm)."
+          }
+        },
+        {
+          "name": "Get Random Echo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes/random",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes", "random"],
+              "query": [
+                {
+                  "key": "emotion",
+                  "value": "calm",
+                  "description": "Filter by emotion (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get a random echo from the user's collection, optionally filtered by emotion."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes/random?emotion=calm",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes", "random"],
+                  "query": [
+                    {
+                      "key": "emotion",
+                      "value": "calm"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"echo_id\": \"echo-789\",\n  \"emotion\": \"calm\",\n  \"timestamp\": \"2025-06-27T10:30:00Z\",\n  \"s3_url\": \"s3://echoes-audio/user123/echo-789.webm\",\n  \"location\": {\n    \"lat\": 37.5407,\n    \"lng\": -77.4360\n  },\n  \"tags\": [\"meditation\", \"morning\"],\n  \"transcript\": \"Gentle bird songs and wind through trees\",\n  \"detected_mood\": \"peaceful\",\n  \"duration_seconds\": 45.2,\n  \"created_at\": \"2025-06-27T10:30:00Z\"\n}"
+            },
+            {
+              "name": "No Echoes Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes/random",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes", "random"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"error\": \"resource_not_found\",\n  \"message\": \"No echoes found\",\n  \"timestamp\": \"2025-06-28T15:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Specific Echo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes/{{echo_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes", "{{echo_id}}"]
+            },
+            "description": "Retrieve a specific echo by its ID."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes/echo-456",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes", "echo-456"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"echo_id\": \"echo-456\",\n  \"emotion\": \"joy\",\n  \"timestamp\": \"2025-06-28T15:00:00Z\",\n  \"s3_url\": \"s3://echoes-audio/user123/echo-456.webm\",\n  \"location\": {\n    \"lat\": 37.5407,\n    \"lng\": -77.4360,\n    \"address\": \"James River, Richmond, VA\"\n  },\n  \"tags\": [\"river\", \"kids\", \"outdoors\"],\n  \"transcript\": \"Rio laughing and water splashing\",\n  \"detected_mood\": \"joyful\",\n  \"duration_seconds\": 25.5,\n  \"created_at\": \"2025-06-28T15:00:00Z\"\n}"
+            },
+            {
+              "name": "Echo Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes/nonexistent-echo",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes", "nonexistent-echo"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"error\": \"resource_not_found\",\n  \"message\": \"Echo not found\",\n  \"details\": {\n    \"echo_id\": \"nonexistent-echo\",\n    \"user_id\": \"user123\"\n  },\n  \"timestamp\": \"2025-06-28T15:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Echo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes/{{echo_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes", "{{echo_id}}"]
+            },
+            "description": "Delete an echo and its associated S3 audio file."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes/echo-456",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes", "echo-456"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": null,
+              "header": [],
+              "cookie": [],
+              "body": null
+            },
+            {
+              "name": "Echo Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes/nonexistent-echo",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes", "nonexistent-echo"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"error\": \"resource_not_found\",\n  \"message\": \"Echo not found\",\n  \"timestamp\": \"2025-06-28T15:00:00Z\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Scenarios",
+      "description": "Test various error conditions and responses",
+      "item": [
+        {
+          "name": "Unauthorized Request",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes"]
+            },
+            "description": "Test request without authentication token to trigger 401 error."
+          },
+          "response": [
+            {
+              "name": "Unauthorized Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"error\": \"authentication_failed\",\n  \"message\": \"Authentication failed: Missing authorization header\",\n  \"timestamp\": \"2025-06-28T15:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Invalid File Extension",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"file_extension\": \"txt\",\n  \"content_type\": \"text/plain\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes/init-upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes", "init-upload"]
+            },
+            "description": "Test validation error with unsupported file extension."
+          },
+          "response": [
+            {
+              "name": "Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"file_extension\": \"txt\",\n  \"content_type\": \"text/plain\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes/init-upload",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes", "init-upload"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"error\": \"validation_error\",\n  \"message\": \"Invalid input data\",\n  \"details\": {\n    \"field\": \"file_extension\",\n    \"issue\": \"must be one of: webm, wav, mp3, m4a, ogg\"\n  },\n  \"timestamp\": \"2025-06-28T15:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Invalid Emotion Type",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emotion\": \"invalid_emotion\",\n  \"tags\": [\"test\"],\n  \"file_extension\": \"webm\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/echoes?echo_id=test-echo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "echoes"],
+              "query": [
+                {
+                  "key": "echo_id",
+                  "value": "test-echo"
+                }
+              ]
+            },
+            "description": "Test validation error with invalid emotion type."
+          },
+          "response": [
+            {
+              "name": "Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"emotion\": \"invalid_emotion\",\n  \"tags\": [\"test\"],\n  \"file_extension\": \"webm\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/echoes?echo_id=test-echo",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "echoes"],
+                  "query": [
+                    {
+                      "key": "echo_id",
+                      "value": "test-echo"
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"error\": \"validation_error\",\n  \"message\": \"Invalid input data\",\n  \"details\": {\n    \"field\": \"emotion\",\n    \"issue\": \"must be one of: joy, calm, sadness, anger, fear, surprise, love, nostalgia, excitement, peaceful, melancholy, hope\"\n  },\n  \"timestamp\": \"2025-06-28T15:00:00Z\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set base URL if not already set",
+          "if (!pm.collectionVariables.get('base_url')) {",
+          "    pm.collectionVariables.set('base_url', 'http://localhost:8000');",
+          "}",
+          "",
+          "// Log request details",
+          "console.log('Making request to:', pm.request.url.toString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script for all requests",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has required headers', function () {",
+          "    pm.expect(pm.response.headers.has('Content-Type')).to.be.true;",
+          "});",
+          "",
+          "// Rate limit header checks",
+          "if (pm.response.headers.has('X-RateLimit-Limit')) {",
+          "    pm.test('Rate limit headers are present', function () {",
+          "        pm.expect(pm.response.headers.has('X-RateLimit-Remaining')).to.be.true;",
+          "        pm.expect(pm.response.headers.has('X-RateLimit-Reset')).to.be.true;",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}

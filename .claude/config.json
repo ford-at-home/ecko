@@ -1,0 +1,15 @@
+{
+  "version": "1.0.72",
+  "project": {
+    "name": "ecko",
+    "type": "claude-flow",
+    "created": "2025-06-28T16:12:00.884Z"
+  },
+  "features": {
+    "swarm": true,
+    "sparc": false,
+    "memory": true,
+    "terminal": true,
+    "mcp": true
+  }
+}

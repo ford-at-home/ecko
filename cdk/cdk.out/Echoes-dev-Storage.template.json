@@ -1,0 +1,396 @@
+{
+ "Description": "Echoes storage resources for dev environment",
+ "Resources": {
+  "AudioBucket96BEECBA": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": "echoes-audio-dev-418272766513",
+    "CorsConfiguration": {
+     "CorsRules": [
+      {
+       "AllowedHeaders": [
+        "*"
+       ],
+       "AllowedMethods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "HEAD"
+       ],
+       "AllowedOrigins": [
+        "*"
+       ],
+       "ExposedHeaders": [
+        "ETag"
+       ],
+       "MaxAge": 3000
+      }
+     ]
+    },
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": 7
+       },
+       "ExpirationInDays": 365,
+       "Id": "DeleteOldVersions",
+       "Status": "Enabled"
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "Tags": [
+     {
+      "Key": "C",
+      "Value": "D"
+     },
+     {
+      "Key": "d",
+      "Value": "e"
+     },
+     {
+      "Key": "E",
+      "Value": "c"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "Echoes-dev-Storage/AudioBucket/Resource"
+   }
+  },
+  "EchoesTable3D95A947": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "echoId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "emotion",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "timestamp",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "emotion-timestamp-index",
+      "KeySchema": [
+       {
+        "AttributeName": "emotion",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "timestamp",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "userId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "echoId",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "EchoesTable-dev",
+    "Tags": [
+     {
+      "Key": "C",
+      "Value": "D"
+     },
+     {
+      "Key": "d",
+      "Value": "e"
+     },
+     {
+      "Key": "E",
+      "Value": "c"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "Echoes-dev-Storage/EchoesTable/Resource"
+   }
+  },
+  "UserS3AccessRole3C77CE26": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRoleWithWebIdentity",
+       "Condition": {
+        "StringEquals": {
+         "cognito-identity.amazonaws.com:aud": "${cognito-identity-pool-id}"
+        },
+        "ForAnyValue:StringLike": {
+         "cognito-identity.amazonaws.com:amr": "authenticated"
+        }
+       },
+       "Effect": "Allow",
+       "Principal": {
+        "Federated": "cognito-identity.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Role for authenticated users to access S3 audio files",
+    "Tags": [
+     {
+      "Key": "C",
+      "Value": "D"
+     },
+     {
+      "Key": "d",
+      "Value": "e"
+     },
+     {
+      "Key": "E",
+      "Value": "c"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Echoes-dev-Storage/UserS3AccessRole/Resource"
+   }
+  },
+  "UserS3AccessRoleDefaultPolicyF8C5E0A2": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:DeleteObject",
+        "s3:GetObject",
+        "s3:PutObject"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "AudioBucket96BEECBA",
+            "Arn"
+           ]
+          },
+          "/${cognito-identity.amazonaws.com:sub}/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": "s3:ListBucket",
+       "Condition": {
+        "StringLike": {
+         "s3:prefix": [
+          "${cognito-identity.amazonaws.com:sub}/*"
+         ]
+        }
+       },
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "AudioBucket96BEECBA",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "UserS3AccessRoleDefaultPolicyF8C5E0A2",
+    "Roles": [
+     {
+      "Ref": "UserS3AccessRole3C77CE26"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Echoes-dev-Storage/UserS3AccessRole/DefaultPolicy/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/zWMSQ7CIBiFz9I9/S11w1oPoEH3hsmEMpkCNg3h7qYQV+97Q94MeCKAB7bFUUgzWs2hPBITBrEtvko8Q7lkYVRC17fvVJHcPXNBcihPxq06qgYVaeag0NCzpvdgtdgP26lWRFUMeRVtc8vpk9v5P63IB6lgiacvJjBPQIYlaj2u2SftFNCuP7pzKCC6AAAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "Echoes-dev-Storage/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "AudioBucketName": {
+   "Description": "S3 bucket for audio files",
+   "Value": {
+    "Ref": "AudioBucket96BEECBA"
+   },
+   "Export": {
+    "Name": "dev-AudioBucketName"
+   }
+  },
+  "AudioBucketArn": {
+   "Description": "S3 bucket ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "AudioBucket96BEECBA",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "dev-AudioBucketArn"
+   }
+  },
+  "EchoesTableName": {
+   "Description": "DynamoDB table for echo metadata",
+   "Value": {
+    "Ref": "EchoesTable3D95A947"
+   },
+   "Export": {
+    "Name": "dev-EchoesTableName"
+   }
+  },
+  "EchoesTableArn": {
+   "Description": "DynamoDB table ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "EchoesTable3D95A947",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "dev-EchoesTableArn"
+   }
+  },
+  "UserS3AccessRoleArn": {
+   "Description": "IAM role for user S3 access",
+   "Value": {
+    "Fn::GetAtt": [
+     "UserS3AccessRole3C77CE26",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "dev-UserS3AccessRoleArn"
+   }
+  },
+  "ExportsOutputFnGetAttAudioBucket96BEECBAArnC8B7DB4B": {
+   "Value": {
+    "Fn::GetAtt": [
+     "AudioBucket96BEECBA",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "Echoes-dev-Storage:ExportsOutputFnGetAttAudioBucket96BEECBAArnC8B7DB4B"
+   }
+  },
+  "ExportsOutputFnGetAttEchoesTable3D95A947Arn5B6A4265": {
+   "Value": {
+    "Fn::GetAtt": [
+     "EchoesTable3D95A947",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "Echoes-dev-Storage:ExportsOutputFnGetAttEchoesTable3D95A947Arn5B6A4265"
+   }
+  },
+  "ExportsOutputRefAudioBucket96BEECBAEFFB6375": {
+   "Value": {
+    "Ref": "AudioBucket96BEECBA"
+   },
+   "Export": {
+    "Name": "Echoes-dev-Storage:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+   }
+  },
+  "ExportsOutputRefEchoesTable3D95A947F0A99335": {
+   "Value": {
+    "Ref": "EchoesTable3D95A947"
+   },
+   "Export": {
+    "Name": "Echoes-dev-Storage:ExportsOutputRefEchoesTable3D95A947F0A99335"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

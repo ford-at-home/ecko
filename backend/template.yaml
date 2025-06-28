@@ -1,0 +1,502 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: >
+  Echoes Audio Time Machine - FastAPI Backend
+  Complete FastAPI application deployed as single Lambda function with API Gateway
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+
+  DomainName:
+    Type: String
+    Default: ""
+    Description: Custom domain name for API (optional)
+
+  CertificateArn:
+    Type: String
+    Default: ""
+    Description: ACM certificate ARN for custom domain (optional)
+
+Conditions:
+  HasCustomDomain: !Not [!Equals [!Ref DomainName, ""]]
+  IsProd: !Equals [!Ref Environment, "prod"]
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.11
+    Tracing: Active
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref Environment
+        DEBUG: !If [IsProd, "false", "true"]
+        LOG_LEVEL: !If [IsProd, "INFO", "DEBUG"]
+        DYNAMODB_TABLE_NAME: !Ref EchoesTable
+        S3_BUCKET_NAME: !Ref EchoesBucket
+        AWS_REGION: !Ref AWS::Region
+        COGNITO_USER_POOL_ID: !Ref CognitoUserPool
+        COGNITO_CLIENT_ID: !Ref CognitoUserPoolClient
+        COGNITO_REGION: !Ref AWS::Region
+        JWT_SECRET_KEY: !Ref JWTSecret
+        CORS_ALLOW_ORIGINS: !If 
+          - IsProd
+          - !Sub "https://${DomainName}"
+          - "http://localhost:3000,http://127.0.0.1:3000"
+        MAX_AUDIO_FILE_SIZE: "10485760"  # 10MB
+        RATE_LIMIT_REQUESTS: "100"
+        RATE_LIMIT_WINDOW: "60"
+    Tags:
+      Environment: !Ref Environment
+      Project: Echoes
+      Service: Backend
+
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
+      AllowOrigin: "'*'"
+      MaxAge: "'86400'"
+    TracingConfig:
+      TracingEnabled: true
+
+Resources:
+  # ===== LAMBDA FUNCTION =====
+  EchoesApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'echoes-${Environment}-api'
+      CodeUri: ./
+      Handler: lambda_handler.lambda_handler
+      Description: Echoes FastAPI Backend
+      MemorySize: 1024  # Higher memory for FastAPI cold starts
+      Timeout: 30
+      ReservedConcurrencyLimit: !If [IsProd, 100, 10]
+      Environment:
+        Variables:
+          # Lambda-specific optimizations
+          PYTHONPATH: "/var/task:/var/runtime"
+          AWS_LAMBDA_EXEC_WRAPPER: "/opt/python/wrapper.py"
+      Events:
+        ApiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref EchoesApi
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref EchoesApi
+            Path: /{proxy+}
+            Method: ANY
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXRayDaemonWriteAccess
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+                - dynamodb:GetItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+                - dynamodb:Scan
+                - dynamodb:BatchGetItem
+                - dynamodb:BatchWriteItem
+              Resource: 
+                - !GetAtt EchoesTable.Arn
+                - !Sub "${EchoesTable.Arn}/index/*"
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:PutObject
+                - s3:DeleteObject
+                - s3:GetObjectVersion
+                - s3:PutObjectAcl
+              Resource: !Sub "${EchoesBucket.Arn}/*"
+            - Effect: Allow
+              Action:
+                - s3:ListBucket
+              Resource: !Ref EchoesBucket
+            - Effect: Allow
+              Action:
+                - cognito-idp:AdminGetUser
+                - cognito-idp:AdminCreateUser
+                - cognito-idp:AdminUpdateUserAttributes
+                - cognito-idp:AdminDeleteUser
+                - cognito-idp:ListUsers
+              Resource: !GetAtt CognitoUserPool.Arn
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref JWTSecret
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/echoes-${Environment}-api:*"
+
+  # ===== API GATEWAY =====
+  EchoesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub 'echoes-${Environment}-api'
+      StageName: !Ref Environment
+      TracingEnabled: true
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
+        AllowOrigin: "'*'"
+        MaxAge: "'86400'"
+        AllowCredentials: true
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
+              Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
+              Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      EndpointConfiguration:
+        Type: REGIONAL
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          LoggingLevel: !If [IsProd, "ERROR", "INFO"]
+          DataTraceEnabled: !If [IsProd, false, true]
+          MetricsEnabled: true
+          CachingEnabled: false
+      Tags:
+        Environment: !Ref Environment
+        Project: Echoes
+
+  # ===== CUSTOM DOMAIN (OPTIONAL) =====
+  CustomDomainName:
+    Type: AWS::ApiGateway::DomainName
+    Condition: HasCustomDomain
+    Properties:
+      DomainName: !Ref DomainName
+      CertificateArn: !Ref CertificateArn
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      SecurityPolicy: TLS_1_2
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Echoes
+
+  BasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Condition: HasCustomDomain
+    Properties:
+      DomainName: !Ref CustomDomainName
+      RestApiId: !Ref EchoesApi
+      Stage: !Ref Environment
+
+  # ===== DYNAMODB TABLE =====
+  EchoesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'EchoesTable-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+        - AttributeName: GSI2PK
+          AttributeType: S
+        - AttributeName: GSI2SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: GSI2
+          KeySchema:
+            - AttributeName: GSI2PK
+              KeyType: HASH
+            - AttributeName: GSI2SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Echoes
+
+  # ===== S3 BUCKET =====
+  EchoesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'echoes-audio-${Environment}-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+          - Id: TransitionToIA
+            Status: Enabled
+            Transition:
+              Days: 30
+              StorageClass: STANDARD_IA
+          - Id: TransitionToGlacier
+            Status: !If [IsProd, "Enabled", "Disabled"]
+            Transition:
+              Days: 90
+              StorageClass: GLACIER
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - DELETE
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            MaxAge: 3600
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Echoes
+
+  # ===== COGNITO USER POOL =====
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub 'echoes-${Environment}-users'
+      AutoVerifiedAttributes:
+        - email
+      MfaConfiguration: OPTIONAL
+      EnabledMfas:
+        - SOFTWARE_TOKEN_MFA
+      UsernameAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: false
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          TemporaryPasswordValidityDays: 7
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: name
+          AttributeDataType: String
+          Required: false
+          Mutable: true
+      UserPoolTags:
+        Environment: !Ref Environment
+        Project: Echoes
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      ClientName: !Sub 'echoes-${Environment}-client'
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+        - USER_PASSWORD_AUTH
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      SupportedIdentityProviders:
+        - COGNITO
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+      AccessTokenValidity: 24
+      IdTokenValidity: 24
+      RefreshTokenValidity: 30
+
+  # ===== SECRETS MANAGER =====
+  JWTSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub 'echoes/${Environment}/jwt-secret'
+      Description: JWT secret key for Echoes API
+      GenerateSecretString:
+        SecretStringTemplate: '{}'
+        GenerateStringKey: jwt_secret_key
+        PasswordLength: 64
+        ExcludeCharacters: '"@/\'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Echoes
+
+  # ===== CLOUDWATCH LOG GROUP =====
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/echoes-${Environment}-api'
+      RetentionInDays: !If [IsProd, 30, 7]
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Echoes
+
+  # ===== CLOUDWATCH ALARMS =====
+  ApiErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsProd
+    Properties:
+      AlarmName: !Sub 'echoes-${Environment}-api-errors'
+      AlarmDescription: Lambda function errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref EchoesApiFunction
+      TreatMissingData: notBreaching
+
+  ApiLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsProd
+    Properties:
+      AlarmName: !Sub 'echoes-${Environment}-api-latency'
+      AlarmDescription: Lambda function high latency
+      MetricName: Duration
+      Namespace: AWS/Lambda
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 10000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref EchoesApiFunction
+      TreatMissingData: notBreaching
+
+Outputs:
+  # ===== API OUTPUTS =====
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${EchoesApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+
+  CustomDomainUrl:
+    Description: Custom domain URL (if configured)
+    Condition: HasCustomDomain
+    Value: !Sub 'https://${DomainName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-CustomDomainUrl'
+
+  ApiId:
+    Description: API Gateway ID
+    Value: !Ref EchoesApi
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiId'
+
+  # ===== LAMBDA OUTPUTS =====
+  LambdaFunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt EchoesApiFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaArn'
+
+  LambdaFunctionName:
+    Description: Lambda function name
+    Value: !Ref EchoesApiFunction
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaName'
+
+  # ===== STORAGE OUTPUTS =====
+  DynamoDBTableName:
+    Description: DynamoDB table name
+    Value: !Ref EchoesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-TableName'
+
+  S3BucketName:
+    Description: S3 bucket name
+    Value: !Ref EchoesBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketName'
+
+  # ===== AUTH OUTPUTS =====
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref CognitoUserPool
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolId'
+
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref CognitoUserPoolClient
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolClientId'
+
+  # ===== SECURITY OUTPUTS =====
+  JWTSecretArn:
+    Description: JWT Secret ARN
+    Value: !Ref JWTSecret
+    Export:
+      Name: !Sub '${AWS::StackName}-JWTSecretArn'

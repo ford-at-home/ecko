@@ -1,0 +1,93 @@
+# Multi-stage build for React frontend
+FROM node:18-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY yarn.lock* ./
+
+# Install dependencies based on the preferred package manager
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  else npm install; \
+  fi
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Build arguments
+ARG REACT_APP_ENV=production
+ARG REACT_APP_API_BASE_URL
+ARG REACT_APP_AWS_REGION
+ARG REACT_APP_AWS_COGNITO_USER_POOL_ID
+ARG REACT_APP_AWS_COGNITO_CLIENT_ID
+ARG REACT_APP_AWS_COGNITO_IDENTITY_POOL_ID
+ARG REACT_APP_AWS_S3_BUCKET
+ARG REACT_APP_VERSION
+ARG REACT_APP_BUILD_TIME
+ARG REACT_APP_GIT_COMMIT
+
+# Set environment variables
+ENV REACT_APP_ENV=${REACT_APP_ENV}
+ENV REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
+ENV REACT_APP_AWS_REGION=${REACT_APP_AWS_REGION}
+ENV REACT_APP_AWS_COGNITO_USER_POOL_ID=${REACT_APP_AWS_COGNITO_USER_POOL_ID}
+ENV REACT_APP_AWS_COGNITO_CLIENT_ID=${REACT_APP_AWS_COGNITO_CLIENT_ID}
+ENV REACT_APP_AWS_COGNITO_IDENTITY_POOL_ID=${REACT_APP_AWS_COGNITO_IDENTITY_POOL_ID}
+ENV REACT_APP_AWS_S3_BUCKET=${REACT_APP_AWS_S3_BUCKET}
+ENV REACT_APP_VERSION=${REACT_APP_VERSION}
+ENV REACT_APP_BUILD_TIME=${REACT_APP_BUILD_TIME}
+ENV REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT}
+
+# Build the application
+RUN \
+  if [ -f yarn.lock ]; then yarn run build; \
+  else npm run build; \
+  fi
+
+# Production image, copy all the files and run nginx
+FROM nginx:alpine AS runner
+
+# Copy nginx configuration
+COPY docker/app/nginx.conf /etc/nginx/nginx.conf
+
+# Copy built app from builder stage
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Create nginx user and set permissions
+RUN addgroup -g 1001 -S nodejs \
+    && adduser -S nextjs -u 1001 \
+    && chown -R nextjs:nodejs /usr/share/nginx/html \
+    && chown -R nextjs:nodejs /var/cache/nginx \
+    && chown -R nextjs:nodejs /var/log/nginx \
+    && chown -R nextjs:nodejs /etc/nginx/conf.d \
+    && touch /var/run/nginx.pid \
+    && chown -R nextjs:nodejs /var/run/nginx.pid
+
+# Create nginx directories with proper permissions
+RUN mkdir -p /var/cache/nginx/client_temp \
+    && mkdir -p /var/cache/nginx/proxy_temp \
+    && mkdir -p /var/cache/nginx/fastcgi_temp \
+    && mkdir -p /var/cache/nginx/uwsgi_temp \
+    && mkdir -p /var/cache/nginx/scgi_temp \
+    && chown -R nextjs:nodejs /var/cache/nginx
+
+# Switch to non-root user
+USER nextjs
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
