@@ -65,6 +65,12 @@ cdk deploy Echoes-Api-$ENVIRONMENT --profile $PROFILE --context environment=$ENV
 echo "Deploying Notification Stack..."
 cdk deploy Echoes-Notif-$ENVIRONMENT --profile $PROFILE --context environment=$ENVIRONMENT --require-approval never
 
+echo "Deploying Frontend Stack..."
+cdk deploy Echoes-Frontend-$ENVIRONMENT --profile $PROFILE --context environment=$ENVIRONMENT --require-approval never
+
+echo "Deploying Network Stack (CloudFront)..."
+cdk deploy Echoes-Network-$ENVIRONMENT --profile $PROFILE --context environment=$ENVIRONMENT --require-approval never
+
 echo "✅ Deployment completed successfully!"
 echo "📋 Stack outputs:"
 cdk list --profile $PROFILE

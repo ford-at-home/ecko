@@ -22,8 +22,9 @@
 - [x] Emotion tagging system complete
 - [x] Environment variables configured
 - [x] **S3 static hosting deployed**
-- [x] **Live URL**: http://echoes-frontend-dev-418272766513.s3-website-us-east-1.amazonaws.com
-- [ ] **Optional**: CloudFront CDN distribution
+- [x] **HTTP URL**: http://echoes-frontend-dev-418272766513.s3-website-us-east-1.amazonaws.com
+- [x] **CloudFront CDN distribution**: Created (ID: E25REFM8HJPLA0)
+- [x] **HTTPS URL**: https://d2rnrthj5zqye2.cloudfront.net (deploying)
 
 ## ✅ Frontend Deployment Completed
 
@@ -80,4 +81,6 @@
 
 **✅ DEPLOYMENT COMPLETE! The Echoes application is live and ready for use!** 🎉
 
-**Frontend URL:** http://echoes-frontend-dev-418272766513.s3-website-us-east-1.amazonaws.com
+**Frontend URLs:**
+- **HTTP:** http://echoes-frontend-dev-418272766513.s3-website-us-east-1.amazonaws.com
+- **HTTPS (CloudFront):** https://d2rnrthj5zqye2.cloudfront.net (recommended for microphone access)

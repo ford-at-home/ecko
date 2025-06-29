@@ -11,7 +11,7 @@ const Record: React.FC = () => {
 
   const [recordingState, setRecordingState] = useState<RecordingState>({
     isRecording: false,
-    duration: 15, // Start at 15 seconds for countdown
+    duration: 0, // Start at 0, will count up during recording
   });
   
   const [emotionValue, setEmotionValue] = useState<number>(50); // 0 = sadness, 100 = joy
@@ -75,17 +75,17 @@ const Record: React.FC = () => {
       };
       
       mediaRecorder.start();
-      setRecordingState(prev => ({ ...prev, isRecording: true, duration: 15 }));
+      setRecordingState(prev => ({ ...prev, isRecording: true, duration: 0 }));
       
-      // Start countdown timer
+      // Start count-up timer
       intervalRef.current = window.setInterval(() => {
         setRecordingState(prev => {
-          const newDuration = prev.duration - 1;
+          const newDuration = prev.duration + 1;
           
-          // Auto-stop at 0 seconds
-          if (newDuration <= 0) {
+          // Auto-stop at 15 seconds
+          if (newDuration >= 15) {
             stopRecording();
-            return { ...prev, duration: 0 };
+            return { ...prev, duration: 15 };
           }
           
           return { ...prev, duration: newDuration };
@@ -131,7 +131,7 @@ const Record: React.FC = () => {
     
     setRecordingState({
       isRecording: false,
-      duration: 15, // Reset to 15 for countdown
+      duration: 0, // Reset to 0
     });
     setIsPlaying(false);
   };
@@ -149,20 +149,17 @@ const Record: React.FC = () => {
                           emotionValue < 75 ? 'Mixed' : 
                           'Joy';
 
-      // TODO: Upload audio to S3 and get URL
-      const mockS3Url = `https://mock-s3-bucket.amazonaws.com/${user.userId}/${Date.now()}.wav`;
-
-      // Calculate actual recording duration (15 - remaining time)
-      const actualDuration = 15 - recordingState.duration;
+      // The actual recording duration is stored in recordingState.duration
+      const actualDuration = recordingState.duration;
 
       const echoData = {
         userId: user.userId,
         emotion: emotionLabel,
-        s3Url: mockS3Url,
         location: location || undefined,
         tags: caption ? [caption] : [],
         duration: actualDuration,
         transcript: caption,
+        audioBlob: recordingState.audioBlob,
       };
 
       await saveEcho(echoData);
@@ -177,7 +174,8 @@ const Record: React.FC = () => {
       
     } catch (error) {
       console.error('Failed to save echo:', error);
-      alert('Failed to save recording. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to save recording: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
@@ -200,14 +198,6 @@ const Record: React.FC = () => {
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
   };
 
-  const handleCaptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newCaption = e.target.value;
-    const wordCount = countWords(newCaption);
-    
-    if (wordCount <= 15) {
-      setCaption(newCaption);
-    }
-  };
 
   return (
     <div className="p-3" style={{ maxWidth: '500px', margin: '0 auto' }}>

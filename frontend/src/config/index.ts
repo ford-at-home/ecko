@@ -35,8 +35,8 @@ export const config = {
 
   // S3 Configuration
   s3: {
-    bucketName: getEnvVar('VITE_S3_BUCKET_NAME', 'echoes-audio-dev'),
-    region: getEnvVar('VITE_AWS_REGION', 'us-east-1'),
+    bucketName: getEnvVar('VITE_S3_BUCKET', 'echoes-audio-dev'),
+    region: getEnvVar('VITE_S3_REGION', 'us-east-1'),
   },
 
   // Feature Flags

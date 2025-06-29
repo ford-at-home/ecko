@@ -8,7 +8,7 @@ interface EchoContextType {
   loading: boolean;
   fetchEchoes: (emotion?: string) => Promise<void>;
   getRandomEcho: (emotion?: string) => Promise<Echo | null>;
-  saveEcho: (echo: Omit<Echo, 'echoId' | 'timestamp'>) => Promise<Echo>;
+  saveEcho: (echo: Omit<Echo, 'echoId' | 'timestamp'> & { audioBlob?: Blob }) => Promise<Echo>;
   deleteEcho: (echoId: string) => Promise<void>;
   setCurrentEcho: (echo: Echo | null) => void;
   refreshEchoes: () => Promise<void>;
@@ -58,7 +58,7 @@ export const EchoProvider: React.FC<EchoProviderProps> = ({ children }) => {
     }
   };
 
-  const saveEcho = async (echoData: Omit<Echo, 'echoId' | 'timestamp'>) => {
+  const saveEcho = async (echoData: Omit<Echo, 'echoId' | 'timestamp'> & { audioBlob?: Blob }) => {
     setLoading(true);
     try {
       const savedEcho = await echoService.saveEcho(echoData);

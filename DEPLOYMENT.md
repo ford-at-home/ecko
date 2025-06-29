@@ -25,13 +25,16 @@ npm install
 # Bootstrap CDK (first time only)
 cdk bootstrap
 
-# Deploy all stacks
+# Deploy all stacks (includes frontend and CloudFront)
 cdk deploy --all --require-approval never
 
 # Or deploy stacks individually
-cdk deploy EchoesStorageStack-dev
-cdk deploy EchoesAuthStack-dev
-cdk deploy EchoesApiStack-dev
+cdk deploy Echoes-dev-Storage
+cdk deploy Echoes-dev-Auth  
+cdk deploy Echoes-dev-Api
+cdk deploy Echoes-dev-Notif
+cdk deploy Echoes-dev-Frontend  # NEW: S3 static hosting
+cdk deploy Echoes-dev-Network   # NEW: CloudFront CDN
 ```
 
 ### 2. Frontend Configuration
@@ -43,10 +46,14 @@ cd frontend
 # Install dependencies
 npm install
 
+# Build the frontend (required before CDK deployment)
+npm run build
+
 # Copy environment configuration
 cp .env.example .env
 
 # Update .env with actual AWS resource IDs from CDK outputs
+# Note: Use CloudFront URL from Network stack output for REACT_APP_FRONTEND_URL
 ```
 
 ### 3. Backend Configuration
@@ -183,9 +190,14 @@ cdk destroy --all
 
 ### Performance Optimization
 - Enable DynamoDB auto-scaling
-- Configure CloudFront for S3 assets
+- CloudFront CDN (automatically configured in Network stack)
 - Implement connection pooling
 - Use Redis for session caching
+
+### Frontend Deployment
+- Build frontend before deploying CDK stacks
+- CloudFront provides HTTPS automatically
+- Custom domains can be configured in network-stack.ts
 
 ### Security Hardening
 - Enable WAF for API Gateway

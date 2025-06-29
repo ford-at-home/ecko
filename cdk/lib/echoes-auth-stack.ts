@@ -107,10 +107,12 @@ export class EchoesAuthStack extends cdk.Stack {
     });
 
     // User Pool Domain
+    // Sanitize account ID to ensure it only contains lowercase letters, numbers, and hyphens
+    const sanitizedAccountId = this.account.substring(0, 8).toLowerCase().replace(/[^a-z0-9]/g, '');
     const userPoolDomain = new cognito.UserPoolDomain(this, 'EchoesUserPoolDomain', {
       userPool: this.userPool,
       cognitoDomain: {
-        domainPrefix: `echoes-${props.environment}-${this.account.substring(0, 8)}`,
+        domainPrefix: `echoes-${props.environment}-${sanitizedAccountId}`,
       },
     });
 

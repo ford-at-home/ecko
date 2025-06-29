@@ -35,18 +35,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (storedUser) {
       try {
         const demoUser = JSON.parse(storedUser);
-        setUser(demoUser);
-        setLoading(false);
-        return;
+        // Check if we also have a valid token
+        const token = localStorage.getItem('echoes_auth_token');
+        if (token) {
+          setUser(demoUser);
+          setLoading(false);
+          return;
+        } else {
+          // No token, clear user
+          localStorage.removeItem('echoes_user');
+        }
       } catch (error) {
         console.error('Failed to parse stored user:', error);
         localStorage.removeItem('echoes_user');
+        localStorage.removeItem('echoes_auth_token');
       }
     }
 
     // Check for existing authenticated user
     const currentUser = authService.getCurrentUser();
-    if (currentUser && authService.isAuthenticated()) {
+    if (currentUser && authService.isAuthenticatedSync()) {
       // Convert CognitoUser to User type
       const user: User = {
         userId: currentUser.userId,
@@ -107,8 +115,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Clear demo user from localStorage
+      // Clear demo user and tokens from localStorage
       localStorage.removeItem('echoes_user');
+      localStorage.removeItem('echoes_auth_token');
       
       // Try to logout from Cognito if authenticated
       if (authService.isAuthenticated()) {
@@ -120,6 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Logout failed:', error);
       // Still clear local state even if logout fails
       localStorage.removeItem('echoes_user');
+      localStorage.removeItem('echoes_auth_token');
       setUser(null);
     }
   };
@@ -130,7 +140,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     register,
     loading,
-    isAuthenticated: !!user && (!!localStorage.getItem('echoes_user') || authService.isAuthenticated()),
+    isAuthenticated: !!user && (!!localStorage.getItem('echoes_user') || authService.isAuthenticatedSync()),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

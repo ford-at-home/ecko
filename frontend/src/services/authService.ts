@@ -3,8 +3,19 @@
  * Handles AWS Cognito authentication and JWT token management
  */
 
+import { Amplify } from 'aws-amplify';
+import { Auth } from '@aws-amplify/auth';
 import { config } from '../config';
 import { apiClient } from '../utils/apiClient';
+
+// Configure Amplify with Cognito settings
+Amplify.configure({
+  Auth: {
+    region: config.cognito.region,
+    userPoolId: config.cognito.userPoolId,
+    userPoolWebClientId: config.cognito.clientId,
+  },
+});
 
 export interface CognitoUser {
   userId: string;
@@ -47,46 +58,55 @@ class AuthService {
 
   /**
    * Login user with Cognito
-   * For now, this is a mock implementation that should be replaced with actual Cognito SDK
    */
   async login(credentials: LoginCredentials): Promise<CognitoUser> {
     try {
-      // TODO: Replace with actual Cognito authentication
-      // For development, we'll use a mock authentication endpoint
+      // Authenticate with Cognito
+      const signInResult = await Auth.signIn(credentials.email, credentials.password);
       
-      // Mock authentication for development
-      if (config.features.debug) {
-        console.log('Debug mode: Using mock authentication');
-        
-        // Generate mock tokens
-        const mockTokens: AuthTokens = {
-          idToken: `mock_id_token_${Date.now()}`,
-          accessToken: `mock_access_token_${Date.now()}`,
-          refreshToken: `mock_refresh_token_${Date.now()}`,
-          expiresIn: 3600, // 1 hour
-        };
-
-        const mockUser: CognitoUser = {
-          userId: `user_${Date.now()}`,
-          email: credentials.email,
-          name: credentials.email.split('@')[0],
-        };
-
-        // Store tokens and user
-        this.storeTokens(mockTokens);
-        this.storeUser(mockUser);
-
-        // Set token in API client
-        apiClient.setAuthToken(mockTokens.idToken);
-
-        return mockUser;
-      }
-
-      // Production Cognito authentication would go here
-      throw new Error('Cognito authentication not yet implemented');
-    } catch (error) {
+      // Get user attributes
+      const attributes = signInResult.attributes || {};
+      
+      // Get current session to retrieve tokens
+      const session = await Auth.currentSession();
+      
+      // Extract tokens
+      const tokens: AuthTokens = {
+        idToken: session.getIdToken().getJwtToken(),
+        accessToken: session.getAccessToken().getJwtToken(),
+        refreshToken: session.getRefreshToken().getToken(),
+        expiresIn: 3600, // 1 hour default
+      };
+      
+      // Create user object
+      const user: CognitoUser = {
+        userId: attributes.sub || signInResult.username,
+        email: attributes.email || credentials.email,
+        name: attributes.name || attributes.given_name || credentials.email.split('@')[0],
+        attributes,
+      };
+      
+      // Store tokens and user
+      this.storeTokens(tokens);
+      this.storeUser(user);
+      
+      // Set token in API client
+      apiClient.setAuthToken(tokens.idToken);
+      
+      return user;
+    } catch (error: any) {
       console.error('Login failed:', error);
-      throw error;
+      
+      // Handle specific Cognito errors
+      if (error.code === 'UserNotConfirmedException') {
+        throw new Error('Please verify your email before logging in.');
+      } else if (error.code === 'NotAuthorizedException') {
+        throw new Error('Invalid email or password.');
+      } else if (error.code === 'UserNotFoundException') {
+        throw new Error('No account found with this email.');
+      }
+      
+      throw new Error(error.message || 'Login failed. Please try again.');
     }
   }
 
@@ -95,41 +115,40 @@ class AuthService {
    */
   async register(credentials: RegisterCredentials): Promise<CognitoUser> {
     try {
-      // TODO: Replace with actual Cognito registration
-      
-      // Mock registration for development
-      if (config.features.debug) {
-        console.log('Debug mode: Using mock registration');
-        
-        // Generate mock tokens
-        const mockTokens: AuthTokens = {
-          idToken: `mock_id_token_${Date.now()}`,
-          accessToken: `mock_access_token_${Date.now()}`,
-          refreshToken: `mock_refresh_token_${Date.now()}`,
-          expiresIn: 3600, // 1 hour
-        };
-
-        const mockUser: CognitoUser = {
-          userId: `user_${Date.now()}`,
+      // Register with Cognito
+      const signUpResult = await Auth.signUp({
+        username: credentials.email,
+        password: credentials.password,
+        attributes: {
           email: credentials.email,
           name: credentials.name,
-        };
-
-        // Store tokens and user
-        this.storeTokens(mockTokens);
-        this.storeUser(mockUser);
-
-        // Set token in API client
-        apiClient.setAuthToken(mockTokens.idToken);
-
-        return mockUser;
-      }
-
-      // Production Cognito registration would go here
-      throw new Error('Cognito registration not yet implemented');
-    } catch (error) {
+        },
+      });
+      
+      // Create user object (user needs to verify email before full authentication)
+      const user: CognitoUser = {
+        userId: signUpResult.userSub,
+        email: credentials.email,
+        name: credentials.name,
+      };
+      
+      // Note: User needs to verify email before they can login
+      // Don't store tokens yet as user isn't authenticated
+      
+      return user;
+    } catch (error: any) {
       console.error('Registration failed:', error);
-      throw error;
+      
+      // Handle specific Cognito errors
+      if (error.code === 'UsernameExistsException') {
+        throw new Error('An account with this email already exists.');
+      } else if (error.code === 'InvalidPasswordException') {
+        throw new Error('Password does not meet requirements. Use at least 8 characters with uppercase, lowercase, numbers, and symbols.');
+      } else if (error.code === 'InvalidParameterException') {
+        throw new Error('Invalid email format.');
+      }
+      
+      throw new Error(error.message || 'Registration failed. Please try again.');
     }
   }
 
@@ -138,18 +157,25 @@ class AuthService {
    */
   async logout(): Promise<void> {
     try {
+      // Sign out from Cognito
+      await Auth.signOut();
+      
       // Clear stored tokens and user data
       localStorage.removeItem(this.tokenKey);
       localStorage.removeItem(this.userKey);
       localStorage.removeItem(this.refreshKey);
+      localStorage.removeItem(`${this.tokenKey}_expires`);
 
       // Clear token from API client
       apiClient.setAuthToken(null);
-
-      // TODO: Call Cognito logout if needed
     } catch (error) {
       console.error('Logout failed:', error);
-      throw error;
+      // Still clear local data even if Cognito logout fails
+      localStorage.removeItem(this.tokenKey);
+      localStorage.removeItem(this.userKey);
+      localStorage.removeItem(this.refreshKey);
+      localStorage.removeItem(`${this.tokenKey}_expires`);
+      apiClient.setAuthToken(null);
     }
   }
 
@@ -158,29 +184,28 @@ class AuthService {
    */
   async refreshToken(): Promise<AuthTokens | null> {
     try {
-      const refreshToken = localStorage.getItem(this.refreshKey);
-      if (!refreshToken) {
+      // Get current authenticated user
+      const cognitoUser = await Auth.currentAuthenticatedUser();
+      if (!cognitoUser) {
         return null;
       }
-
-      // TODO: Implement actual token refresh with Cognito
-      if (config.features.debug) {
-        console.log('Debug mode: Mock token refresh');
-        
-        const newTokens: AuthTokens = {
-          idToken: `mock_id_token_refreshed_${Date.now()}`,
-          accessToken: `mock_access_token_refreshed_${Date.now()}`,
-          refreshToken: refreshToken,
-          expiresIn: 3600,
-        };
-
-        this.storeTokens(newTokens);
-        apiClient.setAuthToken(newTokens.idToken);
-
-        return newTokens;
-      }
-
-      return null;
+      
+      // Get refreshed session
+      const session = await Auth.currentSession();
+      
+      // Extract new tokens
+      const tokens: AuthTokens = {
+        idToken: session.getIdToken().getJwtToken(),
+        accessToken: session.getAccessToken().getJwtToken(),
+        refreshToken: session.getRefreshToken().getToken(),
+        expiresIn: 3600,
+      };
+      
+      // Store new tokens
+      this.storeTokens(tokens);
+      apiClient.setAuthToken(tokens.idToken);
+      
+      return tokens;
     } catch (error) {
       console.error('Token refresh failed:', error);
       return null;
@@ -191,15 +216,52 @@ class AuthService {
    * Get current user
    */
   getCurrentUser(): CognitoUser | null {
+    // First check localStorage for cached user
     const userJson = localStorage.getItem(this.userKey);
-    if (!userJson) {
-      return null;
+    if (userJson) {
+      try {
+        return JSON.parse(userJson);
+      } catch (error) {
+        console.error('Failed to parse stored user:', error);
+      }
     }
-
+    
+    // If no cached user, try to get from Cognito
+    this.fetchCurrentUser();
+    return null;
+  }
+  
+  /**
+   * Fetch current user from Cognito
+   */
+  private async fetchCurrentUser(): Promise<CognitoUser | null> {
     try {
-      return JSON.parse(userJson);
+      const cognitoUser = await Auth.currentAuthenticatedUser();
+      const attributes = await Auth.userAttributes(cognitoUser);
+      
+      // Convert attributes array to object
+      const attributesObj: Record<string, string> = {};
+      attributes.forEach(attr => {
+        attributesObj[attr.Name] = attr.Value;
+      });
+      
+      const user: CognitoUser = {
+        userId: attributesObj.sub || cognitoUser.username,
+        email: attributesObj.email || '',
+        name: attributesObj.name || attributesObj.given_name || '',
+        attributes: attributesObj,
+      };
+      
+      // Cache the user
+      this.storeUser(user);
+      
+      // Get and set the current token
+      const session = await Auth.currentSession();
+      apiClient.setAuthToken(session.getIdToken().getJwtToken());
+      
+      return user;
     } catch (error) {
-      console.error('Failed to parse stored user:', error);
+      console.error('Failed to fetch current user:', error);
       return null;
     }
   }
@@ -207,8 +269,20 @@ class AuthService {
   /**
    * Check if user is authenticated
    */
-  isAuthenticated(): boolean {
-    return !!this.getStoredToken();
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      await Auth.currentAuthenticatedUser();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  
+  /**
+   * Check if user is authenticated (sync version using stored token)
+   */
+  isAuthenticatedSync(): boolean {
+    return !!this.getStoredToken() && !this.isTokenExpired();
   }
 
   /**
@@ -265,6 +339,47 @@ class AuthService {
 
 // Create and export singleton instance
 export const authService = new AuthService();
+
+// Re-export verification functions on the authService instance
+authService.verifyEmail = verifyEmail;
+authService.resendVerificationCode = resendVerificationCode;
+
+// Additional methods for email verification
+export interface VerifyEmailCredentials {
+  email: string;
+  code: string;
+}
+
+/**
+ * Verify email with confirmation code
+ */
+export async function verifyEmail(credentials: VerifyEmailCredentials): Promise<void> {
+  try {
+    await Auth.confirmSignUp(credentials.email, credentials.code);
+  } catch (error: any) {
+    console.error('Email verification failed:', error);
+    
+    if (error.code === 'CodeMismatchException') {
+      throw new Error('Invalid verification code.');
+    } else if (error.code === 'ExpiredCodeException') {
+      throw new Error('Verification code has expired. Please request a new one.');
+    }
+    
+    throw new Error(error.message || 'Verification failed.');
+  }
+}
+
+/**
+ * Resend verification code
+ */
+export async function resendVerificationCode(email: string): Promise<void> {
+  try {
+    await Auth.resendSignUp(email);
+  } catch (error: any) {
+    console.error('Failed to resend verification code:', error);
+    throw new Error(error.message || 'Failed to resend code.');
+  }
+}
 
 // Setup token refresh on initialization
 authService.setupTokenRefresh();

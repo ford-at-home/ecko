@@ -3,125 +3,120 @@ import { type Echo } from '../types';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 class EchoService {
-  // This method will be used when connecting to the actual backend
-  // @ts-ignore - Will be used when backend is connected
-  private async request<T>(_endpoint: string, _options: RequestInit = {}): Promise<T> {
-    const url = `${API_BASE_URL}${_endpoint}`;
-    const token = localStorage.getItem('echoes_token');
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const token = localStorage.getItem('echoes_auth_token');
     
     const response = await fetch(url, {
-      ..._options,
+      ...options,
       headers: {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
-        ..._options.headers,
+        ...options.headers,
       },
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('API Error:', response.status, errorText);
+      
+      // Try to parse error message from API
+      let errorMessage = `API Error: ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.detail || errorData.message || errorMessage;
+      } catch {
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return response.json();
   }
 
   async getEchoes(emotion?: string): Promise<Echo[]> {
-    // For now, return mock data until backend is ready
-    return this.getMockEchoes(emotion);
+    const endpoint = emotion ? `/echoes?emotion=${encodeURIComponent(emotion)}` : '/echoes';
+    return this.request<Echo[]>(endpoint);
   }
 
   async getRandomEcho(emotion?: string): Promise<Echo | null> {
-    // For now, return mock data until backend is ready
-    const echoes = this.getMockEchoes(emotion);
-    return echoes.length > 0 ? echoes[Math.floor(Math.random() * echoes.length)] : null;
+    const endpoint = emotion ? `/echoes/random?emotion=${encodeURIComponent(emotion)}` : '/echoes/random';
+    try {
+      return await this.request<Echo>(endpoint);
+    } catch (error) {
+      console.error('Error getting random echo:', error);
+      return null;
+    }
   }
 
-  async saveEcho(echoData: Omit<Echo, 'echoId' | 'timestamp'>): Promise<Echo> {
-    // For now, create a mock saved echo until backend is ready
-    const echo: Echo = {
-      ...echoData,
-      echoId: `echo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Store in localStorage for persistence during development
-    const storedEchoes = JSON.parse(localStorage.getItem('echoes_mock_data') || '[]');
-    storedEchoes.unshift(echo);
-    localStorage.setItem('echoes_mock_data', JSON.stringify(storedEchoes));
-
-    return echo;
+  async saveEcho(echoData: Omit<Echo, 'echoId' | 'timestamp'> & { audioBlob?: Blob }): Promise<Echo> {
+    // First, get presigned URL for audio upload if audioBlob is provided
+    let s3Url: string | undefined;
+    
+    if (echoData.audioBlob) {
+      const { uploadUrl, echoId } = await this.initUpload();
+      
+      // Upload audio to S3 using presigned URL
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        body: echoData.audioBlob,
+        headers: {
+          'Content-Type': 'audio/webm',
+        },
+      });
+      
+      // Extract the S3 URL without query parameters
+      s3Url = uploadUrl.split('?')[0];
+      
+      // Save echo metadata with the S3 URL
+      const echoPayload = {
+        emotion: echoData.emotion,
+        tags: echoData.tags || [],
+        transcript: echoData.transcript,
+        file_extension: 'webm',
+        duration_seconds: echoData.duration,
+        location: echoData.location,
+      };
+      
+      return this.request<Echo>(`/echoes?echo_id=${echoId}`, {
+        method: 'POST',
+        body: JSON.stringify(echoPayload),
+      });
+    }
+    
+    // If no audio blob, just save the echo metadata
+    return this.request<Echo>('/echoes', {
+      method: 'POST',
+      body: JSON.stringify(echoData),
+    });
   }
 
   async deleteEcho(echoId: string): Promise<void> {
-    // Remove from localStorage for now
-    const storedEchoes = JSON.parse(localStorage.getItem('echoes_mock_data') || '[]');
-    const filteredEchoes = storedEchoes.filter((echo: Echo) => echo.echoId !== echoId);
-    localStorage.setItem('echoes_mock_data', JSON.stringify(filteredEchoes));
+    await this.request<void>(`/echoes/${echoId}`, {
+      method: 'DELETE',
+    });
   }
 
   async initUpload(): Promise<{ uploadUrl: string; echoId: string }> {
-    // Mock implementation for now
-    return {
-      uploadUrl: `https://mock-s3-bucket.amazonaws.com/upload/${Date.now()}`,
-      echoId: `echo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    };
+    return this.request<{ uploadUrl: string; echoId: string }>('/echoes/init-upload', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        file_extension: 'webm',
+        content_type: 'audio/webm'
+      }),
+    });
   }
 
-  private getMockEchoes(emotion?: string): Echo[] {
-    // Get stored echoes from localStorage
-    const storedEchoes = JSON.parse(localStorage.getItem('echoes_mock_data') || '[]');
-    
-    // Add some default mock echoes if none exist
-    if (storedEchoes.length === 0) {
-      const mockEchoes: Echo[] = [
-        {
-          echoId: 'echo_1',
-          userId: 'user_1',
-          emotion: 'Joy',
-          timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-          s3Url: 'https://mock-s3.amazonaws.com/echo_1.wav',
-          location: { lat: 37.7749, lng: -122.4194, address: 'San Francisco, CA' },
-          tags: ['morning', 'coffee', 'birds'],
-          transcript: 'Birds chirping outside with morning coffee brewing',
-          detectedMood: 'peaceful',
-          duration: 15,
-        },
-        {
-          echoId: 'echo_2',
-          userId: 'user_1',
-          emotion: 'Calm',
-          timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-          s3Url: 'https://mock-s3.amazonaws.com/echo_2.wav',
-          location: { lat: 40.7128, lng: -74.0060, address: 'New York, NY' },
-          tags: ['rain', 'window', 'reading'],
-          transcript: 'Gentle rain against the window while reading',
-          detectedMood: 'calm',
-          duration: 22,
-        },
-        {
-          echoId: 'echo_3',
-          userId: 'user_1',
-          emotion: 'Nostalgic',
-          timestamp: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-          s3Url: 'https://mock-s3.amazonaws.com/echo_3.wav',
-          location: { lat: 34.0522, lng: -118.2437, address: 'Los Angeles, CA' },
-          tags: ['childhood', 'laughter', 'playground'],
-          transcript: 'Children playing and laughing at the old playground',
-          detectedMood: 'nostalgic',
-          duration: 18,
-        },
-      ];
-      
-      localStorage.setItem('echoes_mock_data', JSON.stringify(mockEchoes));
-      storedEchoes.push(...mockEchoes);
+  // Health check method to verify API connectivity
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.request<{ status: string }>('/health');
+      return true;
+    } catch (error) {
+      console.error('API health check failed:', error);
+      return false;
     }
-
-    // Filter by emotion if specified
-    if (emotion) {
-      return storedEchoes.filter((echo: Echo) => echo.emotion.toLowerCase() === emotion.toLowerCase());
-    }
-
-    return storedEchoes;
   }
 }
 

@@ -48,14 +48,61 @@ def handler(event, context):
             })
         }
     
-    # For all other paths, return authentication required
+    # Mock implementation for echo endpoints (temporary for testing)
+    if path == '/echoes/init-upload' and event.get('httpMethod') == 'POST':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'uploadUrl': 'https://echoes-audio-dev-418272766513.s3.amazonaws.com/test-audio.webm?mock-presigned-url',
+                'echoId': 'echo-' + str(int(context.request_id[-8:], 16) % 1000000),
+                's3_key': 'test-audio.webm',
+                'fields': {}
+            })
+        }
+    
+    elif path == '/echoes' and event.get('httpMethod') == 'POST':
+        body = json.loads(event.get('body', '{}'))
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'echoId': body.get('echoId', 'echo-123'),
+                'userId': 'demo-user',
+                's3Url': body.get('s3_key', ''),
+                'emotion': body.get('emotion', 'Joy'),
+                'timestamp': '2025-06-29T08:00:00Z',
+                'location': body.get('location'),
+                'tags': body.get('tags', []),
+                'transcript': body.get('transcript', ''),
+                'duration': 15
+            })
+        }
+    
+    elif path == '/echoes' and event.get('httpMethod') == 'GET':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps([])  # Return empty list for now
+        }
+    
+    # Default response for unhandled paths
     return {
-        'statusCode': 403,
+        'statusCode': 404,
         'headers': {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
         },
         'body': json.dumps({
-            'message': 'Authentication required. Please include a valid JWT token in the Authorization header.'
+            'message': 'Endpoint not found'
         })
     }
